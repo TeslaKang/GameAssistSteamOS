@@ -1,0 +1,11 @@
+{
+  "name": "Game Assist",
+  "name-ko-KR": "게임 도우미",  
+  "author": "화랑",
+  "flags": ["root"],
+  "publish": {
+    "tags": ["bash", "PowerTool", "convenience"],
+    "description": "Created to easily configure system power in Steam OS",
+    "description-ko-KR": "스팀 OS에서 시스템 전력을 쉽게 설정하기 위해서 만들어 졌습니다"
+  }
+}
