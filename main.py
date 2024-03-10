@@ -19,7 +19,7 @@ logger.setLevel(logging.INFO) # can be changed to logging.DEBUG for debugging is
 
 def log(txt):
     logger.info(txt)
-#    print(txt)    
+    print(txt)    
 
 Initialized = False
 
@@ -36,6 +36,7 @@ USER_NAME = None
 def get_user():
     global USER_NAME
     cmd = "who | awk '{print $1}' | sort | head -1"
+    count = 0
     while USER_NAME is None:
         USER_LIST = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
         for get_first in USER_LIST.stdout:
@@ -44,6 +45,9 @@ def get_user():
                 USER_NAME = name
             break
         sleep(1)
+        count = count + 1
+        if count > 3:
+            USER_NAME = "deck"
 
 def steam_ifrunning_deckui(cmd):
     global HOME_DIR
@@ -839,25 +843,35 @@ class Plugin:
         
         Initialized = True
 
-        log("Initializing Plugin")
+        log("Initializing Plugin step 1")
 
         get_user()
+
+        log("Initializing Plugin step 2")
 
         self.loadSetting(self)
         GlobalLocale = self._getGlobalSetting(self, "Lang")
 
+        log("Initializing Plugin step 3")
+
         if not os.path.exists(self.shortcutsItemPath):
             self._makeDefItems(self)
 
+        log("Initializing Plugin step 4")
+
         self.loadHandyGCCS(self)
 
+        log("Initializing Plugin step 5")
+
         self.loadGameAssistModule(self)
+
+        log("Initializing Plugin step 6")
 
     async def _unload(self):
         runningFanControl = False
 
-#aa = Plugin()
-#aa._makeDefItems()
+aa = Plugin()
+aa._makeDefItems()
 
 #aa._getGlobalSetting("useGameProfile-2844161208")
 #aa.loadSetting()
