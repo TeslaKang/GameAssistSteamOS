@@ -870,8 +870,8 @@ class Plugin:
     async def _unload(self):
         runningFanControl = False
 
-aa = Plugin()
-aa._makeDefItems()
+#aa = Plugin()
+#aa._makeDefItems()
 
 #aa._getGlobalSetting("useGameProfile-2844161208")
 #aa.loadSetting()

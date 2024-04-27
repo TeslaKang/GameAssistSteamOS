@@ -561,27 +561,20 @@
       __assign = Object.assign || function (t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
           s = arguments[i];
-
           for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
         }
-
         return t;
       };
-
       return __assign.apply(this, arguments);
     };
-
     var __rest = window && window.__rest || function (s, e) {
       var t = {};
-
       for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0) t[p] = s[p];
-
       if (s != null && typeof Object.getOwnPropertySymbols === "function") for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
         if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i])) t[p[i]] = s[p[i]];
       }
       return t;
     };
-
     function Tree2Element(tree) {
       return tree && tree.map(function (node, i) {
         return React__default["default"].createElement(node.tag, __assign({
@@ -589,8 +582,8 @@
         }, node.attr), Tree2Element(node.child));
       });
     }
-
     function GenIcon(data) {
+      // eslint-disable-next-line react/display-name
       return function (props) {
         return React__default["default"].createElement(IconBase, __assign({
           attr: __assign({}, data.attr)
@@ -600,14 +593,13 @@
     function IconBase(props) {
       var elem = function (conf) {
         var attr = props.attr,
-            size = props.size,
-            title = props.title,
-            svgProps = __rest(props, ["attr", "size", "title"]);
-
+          size = props.size,
+          title = props.title,
+          svgProps = __rest(props, ["attr", "size", "title"]);
         var computedSize = size || conf.size || "1em";
         var className;
         if (conf.className) className = conf.className;
-        if (props.className) className = (className ? className + ' ' : '') + props.className;
+        if (props.className) className = (className ? className + " " : "") + props.className;
         return React__default["default"].createElement("svg", __assign({
           stroke: "currentColor",
           fill: "currentColor",
@@ -622,7 +614,6 @@
           xmlns: "http://www.w3.org/2000/svg"
         }), title && React__default["default"].createElement("title", null, title), props.children);
       };
-
       return IconContext !== undefined ? React__default["default"].createElement(IconContext.Consumer, null, function (conf) {
         return elem(conf);
       }) : elem(DefaultContext);
@@ -1434,7 +1425,7 @@
     function unsafeStringify(arr, offset = 0) {
       // Note: Be careful editing this code!  It's been tuned for performance
       // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
-      return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
+      return byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]];
     }
 
     const randomUUID = typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID.bind(crypto);
