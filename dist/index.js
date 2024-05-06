@@ -1931,6 +1931,7 @@
         const canvasRef = useCanvas(draw);
         return window.SP_REACT.createElement("canvas", { ref: canvasRef, ...rest });
     };
+    var canvasFan = null;
     const useCanvas = (draw) => {
         const canvasRef = React.useRef(null);
         React.useEffect(() => {
@@ -1948,6 +1949,7 @@
                 window.cancelAnimationFrame(animationFrameId);
             };
         }, [draw]);
+        canvasFan = canvasRef;
         return canvasRef;
     };
     const POINT_SIZE = 13;
@@ -1969,6 +1971,16 @@
         }
         function setCurve(items) {
             items.sort((n1, n2) => n1.x - n2.x);
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].x < 0)
+                    items[i].x = 0;
+                if (items[i].x > 1)
+                    items[i].x = 1;
+                if (items[i].y < 0)
+                    items[i].y = 0;
+                if (items[i].y > 1)
+                    items[i].y = 1;
+            }
             setCurveInternal(items);
             PyInterop.setFanCurveItems(items);
         }
@@ -1988,13 +2000,20 @@
             }
         }
         function onClickCanvas(e) {
-            //console.log("canvas click", e);
+            //PyInterop.logPrint("canvas click1 ");
+            if (canvasFan == null) {
+                //PyInterop.logPrint("is null ");
+                return;
+            }
+            const rect = canvasFan.current.getBoundingClientRect();
+            //PyInterop.logPrint("Target dimensions1 " + rect.width.toString() + "x" + rect.height.toString());
+            //PyInterop.logPrint("canvas click2 " + e.clientX.toString() + ", " + e.clientY.toString());
             const realEvent = e.nativeEvent;
-            //console.log("Canvas click @ (" + realEvent.layerX.toString() + ", " + realEvent.layerY.toString() + ")");
+            //PyInterop.logPrint("Canvas click @ (" + realEvent.layerX.toString() + ", " + realEvent.layerY.toString() + ")");
             const target = e.currentTarget;
-            //console.log("Target dimensions " + target.width.toString() + "x" + target.height.toString());
-            const clickX = realEvent.layerX;
-            const clickY = realEvent.layerY;
+            //PyInterop.logPrint("Target dimensions " + target.width.toString() + "x" + target.height.toString());
+            const clickX = realEvent.clientX - rect.left;
+            const clickY = realEvent.clientY - rect.top;
             for (let i = 0; i < curveGlobal.length; i++) {
                 const curvePoint = curveGlobal[i];
                 const pointX = curvePoint.x * target.width;
@@ -2015,7 +2034,7 @@
             let xx = clickX / target.width;
             xx = parseInt((xx * 14).toFixed(0)) / 14.0;
             let yy = 1 - (clickY / target.height);
-            PyInterop.logPrint("x : " + xx.toString() + " y: " + yy.toString());
+            //PyInterop.logPrint("x : " + xx.toString() + " y: " + yy.toString());
             curveGlobal.push({ x: xx, y: yy });
             setCurve([...curveGlobal]);
         }
@@ -2187,9 +2206,9 @@
                     } })),
             enabledGlobal &&
                 window.SP_REACT.createElement(PanelSectionRow, null,
-                    window.SP_REACT.createElement(Canvas, { draw: drawCanvas, width: 290, height: 200, style: {
-                            "width": "290px",
-                            "height": "200px",
+                    window.SP_REACT.createElement(Canvas, { draw: drawCanvas, width: 250, height: 220, style: {
+                            "width": "250px",
+                            "height": "220px",
                             "padding": "0px",
                             "border": "1px solid #1a9fff",
                             //"position":"relative",
