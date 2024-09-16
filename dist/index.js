@@ -14,14 +14,503 @@
   };
   var IconContext = React__default["default"].createContext && React__default["default"].createContext(DefaultContext);
 
+<<<<<<< HEAD
   var __assign = window && window.__assign || function () {
     __assign = Object.assign || function (t) {
       for (var s, i = 1, n = arguments.length; i < n; i++) {
         s = arguments[i];
         for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+=======
+    const CommonDialogDivs = Object.values(CommonUIModule).filter((m) => typeof m === 'object' && m?.render?.toString().includes('"div",Object.assign({},'));
+    const MappedDialogDivs = new Map(Object.values(CommonDialogDivs).map((m) => {
+        const renderedDiv = m.render({});
+        // Take only the first class name segment as it identifies the element we want
+        return [renderedDiv.props.className.split(' ')[0], m];
+    }));
+    MappedDialogDivs.get('DialogHeader');
+    MappedDialogDivs.get('DialogSubHeader');
+    MappedDialogDivs.get('DialogFooter');
+    MappedDialogDivs.get('DialogLabel');
+    MappedDialogDivs.get('DialogBodyText');
+    MappedDialogDivs.get('DialogBody');
+    MappedDialogDivs.get('DialogControlsSection');
+    MappedDialogDivs.get('DialogControlsSectionHeader');
+    Object.values(CommonUIModule).find((mod) => mod?.render?.toString()?.includes('DialogButton') && mod?.render?.toString()?.includes('Primary'));
+    const DialogButtonSecondary = Object.values(CommonUIModule).find((mod) => mod?.render?.toString()?.includes('Object.assign({type:"button"') &&
+        mod?.render?.toString()?.includes('DialogButton') &&
+        mod?.render?.toString()?.includes('Secondary'));
+    // This is the "main" button. The Primary can act as a submit button,
+    // therefore secondary is chosen (also for backwards comp. reasons)
+    const DialogButton = DialogButtonSecondary;
+
+    const ButtonItem = (CommonUIModule.ButtonField ||
+        Object.values(CommonUIModule).find((mod) => mod?.render?.toString()?.includes('"highlightOnFocus","childrenContainerWidth"') ||
+            mod?.render?.toString()?.includes('childrenContainerWidth:"min"')));
+
+    Object.values(CommonUIModule).find((mod) => mod?.prototype?.SetSelectedOption && mod?.prototype?.BuildMenu);
+    const DropdownItem = Object.values(CommonUIModule).find((mod) => mod?.toString()?.includes('"dropDownControlRef","description"'));
+
+    const Field = findModuleChild((m) => {
+        if (typeof m !== 'object')
+            return undefined;
+        for (let prop in m) {
+            if (m[prop]?.render?.toString().includes('"shift-children-below"'))
+                return m[prop];
+        }
+    });
+
+    const Focusable = findModuleChild((m) => {
+        if (typeof m !== 'object')
+            return undefined;
+        for (let prop in m) {
+            if (m[prop]?.render?.toString()?.includes('["flow-children","onActivate","onCancel","focusClassName",'))
+                return m[prop];
+        }
+    });
+
+    var GamepadButton;
+    (function (GamepadButton) {
+        GamepadButton[GamepadButton["INVALID"] = 0] = "INVALID";
+        GamepadButton[GamepadButton["OK"] = 1] = "OK";
+        GamepadButton[GamepadButton["CANCEL"] = 2] = "CANCEL";
+        GamepadButton[GamepadButton["SECONDARY"] = 3] = "SECONDARY";
+        GamepadButton[GamepadButton["OPTIONS"] = 4] = "OPTIONS";
+        GamepadButton[GamepadButton["BUMPER_LEFT"] = 5] = "BUMPER_LEFT";
+        GamepadButton[GamepadButton["BUMPER_RIGHT"] = 6] = "BUMPER_RIGHT";
+        GamepadButton[GamepadButton["TRIGGER_LEFT"] = 7] = "TRIGGER_LEFT";
+        GamepadButton[GamepadButton["TRIGGER_RIGHT"] = 8] = "TRIGGER_RIGHT";
+        GamepadButton[GamepadButton["DIR_UP"] = 9] = "DIR_UP";
+        GamepadButton[GamepadButton["DIR_DOWN"] = 10] = "DIR_DOWN";
+        GamepadButton[GamepadButton["DIR_LEFT"] = 11] = "DIR_LEFT";
+        GamepadButton[GamepadButton["DIR_RIGHT"] = 12] = "DIR_RIGHT";
+        GamepadButton[GamepadButton["SELECT"] = 13] = "SELECT";
+        GamepadButton[GamepadButton["START"] = 14] = "START";
+        GamepadButton[GamepadButton["LSTICK_CLICK"] = 15] = "LSTICK_CLICK";
+        GamepadButton[GamepadButton["RSTICK_CLICK"] = 16] = "RSTICK_CLICK";
+        GamepadButton[GamepadButton["LSTICK_TOUCH"] = 17] = "LSTICK_TOUCH";
+        GamepadButton[GamepadButton["RSTICK_TOUCH"] = 18] = "RSTICK_TOUCH";
+        GamepadButton[GamepadButton["LPAD_TOUCH"] = 19] = "LPAD_TOUCH";
+        GamepadButton[GamepadButton["LPAD_CLICK"] = 20] = "LPAD_CLICK";
+        GamepadButton[GamepadButton["RPAD_TOUCH"] = 21] = "RPAD_TOUCH";
+        GamepadButton[GamepadButton["RPAD_CLICK"] = 22] = "RPAD_CLICK";
+        GamepadButton[GamepadButton["REAR_LEFT_UPPER"] = 23] = "REAR_LEFT_UPPER";
+        GamepadButton[GamepadButton["REAR_LEFT_LOWER"] = 24] = "REAR_LEFT_LOWER";
+        GamepadButton[GamepadButton["REAR_RIGHT_UPPER"] = 25] = "REAR_RIGHT_UPPER";
+        GamepadButton[GamepadButton["REAR_RIGHT_LOWER"] = 26] = "REAR_RIGHT_LOWER";
+        GamepadButton[GamepadButton["STEAM_GUIDE"] = 27] = "STEAM_GUIDE";
+        GamepadButton[GamepadButton["STEAM_QUICK_MENU"] = 28] = "STEAM_QUICK_MENU";
+    })(GamepadButton || (GamepadButton = {}));
+
+    function fakeRenderComponent(fun, customHooks = {}) {
+        const hooks = window.SP_REACT.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentDispatcher
+            .current;
+        // TODO: add more hooks
+        let oldHooks = {
+            useContext: hooks.useContext,
+            useCallback: hooks.useCallback,
+            useLayoutEffect: hooks.useLayoutEffect,
+            useEffect: hooks.useEffect,
+            useMemo: hooks.useMemo,
+            useRef: hooks.useRef,
+            useState: hooks.useState,
+        };
+        hooks.useCallback = (cb) => cb;
+        hooks.useContext = (cb) => cb._currentValue;
+        hooks.useLayoutEffect = (_) => { }; //cb();
+        hooks.useMemo = (cb, _) => cb;
+        hooks.useEffect = (_) => { }; //cb();
+        hooks.useRef = (val) => ({ current: val || {} });
+        hooks.useState = (v) => {
+            let val = v;
+            return [val, (n) => (val = n)];
+        };
+        Object.assign(hooks, customHooks);
+        const res = fun(hooks);
+        Object.assign(hooks, oldHooks);
+        return res;
+    }
+
+    function sleep(ms) {
+        return new Promise((res) => setTimeout(res, ms));
+    }
+    /**
+     * Finds the SP window, since it is a render target as of 10-19-2022's beta
+     */
+    function findSP() {
+        // old (SP as host)
+        if (document.title == 'SP')
+            return window;
+        // new (SP as popup)
+        const navTrees = getGamepadNavigationTrees();
+        return navTrees?.find((x) => x.m_ID == 'root_1_').Root.Element.ownerDocument.defaultView;
+    }
+    /**
+     * Gets the correct FocusNavController, as the Feb 22 2023 beta has two for some reason.
+     */
+    function getFocusNavController() {
+        return window.GamepadNavTree?.m_context?.m_controller || window.FocusNavController;
+    }
+    /**
+     * Gets the gamepad navigation trees as Valve seems to be moving them.
+     */
+    function getGamepadNavigationTrees() {
+        const focusNav = getFocusNavController();
+        const context = focusNav.m_ActiveContext || focusNav.m_LastActiveContext;
+        return context?.m_rgGamepadNavigationTrees;
+    }
+
+    const showContextMenu = findModuleChild((m) => {
+        if (typeof m !== 'object')
+            return undefined;
+        for (let prop in m) {
+            if (typeof m[prop] === 'function' && m[prop].toString().includes('stopPropagation))')) {
+                return m[prop];
+            }
+        }
+    });
+    const Menu = findModuleChild((m) => {
+        if (typeof m !== 'object')
+            return undefined;
+        for (let prop in m) {
+            if (m[prop]?.prototype?.HideIfSubmenu && m[prop]?.prototype?.HideMenu) {
+                return m[prop];
+            }
+        }
+    });
+    findModuleChild((m) => {
+        if (typeof m !== 'object')
+            return undefined;
+        for (let prop in m) {
+            if ((m[prop]?.toString()?.includes?.('bInGamepadUI:') &&
+                fakeRenderComponent(() => m[prop]({ overview: { appid: 7 } }))?.type?.prototype?.RenderSubMenu) ||
+                (m[prop]?.prototype?.RenderSubMenu && m[prop]?.prototype?.ShowSubMenu)) {
+                return m[prop];
+            }
+        }
+    });
+    const MenuItem = findModuleChild((m) => {
+        if (typeof m !== 'object')
+            return undefined;
+        for (let prop in m) {
+            if (m[prop]?.render?.toString()?.includes('bPlayAudio:') ||
+                (m[prop]?.prototype?.OnOKButton && m[prop]?.prototype?.OnMouseEnter)) {
+                return m[prop];
+            }
+        }
+    });
+    /*
+    all().map(m => {
+    if (typeof m !== "object") return undefined;
+    for (let prop in m) { if (m[prop]?.prototype?.OK && m[prop]?.prototype?.Cancel && m[prop]?.prototype?.render) return m[prop]}
+    }).find(x => x)
+    */
+
+    const showModalRaw = findModuleChild((m) => {
+        if (typeof m !== 'object')
+            return undefined;
+        for (let prop in m) {
+            if (typeof m[prop] === 'function' &&
+                m[prop].toString().includes('props.bDisableBackgroundDismiss') &&
+                !m[prop]?.prototype?.Cancel) {
+                return m[prop];
+            }
+        }
+    });
+    const oldShowModalRaw = findModuleChild((m) => {
+        if (typeof m !== 'object')
+            return undefined;
+        for (let prop in m) {
+            if (typeof m[prop] === 'function' && m[prop].toString().includes('bHideMainWindowForPopouts:!0')) {
+                return m[prop];
+            }
+        }
+    });
+    const showModal = (modal, parent, props = {
+        strTitle: 'Decky Dialog',
+        bHideMainWindowForPopouts: false,
+    }) => {
+        if (showModalRaw) {
+            return showModalRaw(modal, parent || findSP(), props.strTitle, props, undefined, {
+                bHideActions: props.bHideActionIcons,
+            });
+        }
+        else if (oldShowModalRaw) {
+            return oldShowModalRaw(modal, parent || findSP(), props);
+        }
+        else {
+            throw new Error('[DFL:Modals]: Cannot find showModal function');
+        }
+    };
+    const ConfirmModal = findModuleChild((m) => {
+        if (typeof m !== 'object')
+            return undefined;
+        for (let prop in m) {
+            if (!m[prop]?.prototype?.OK && m[prop]?.prototype?.Cancel && m[prop]?.prototype?.render) {
+                return m[prop];
+            }
+        }
+    });
+    // new as of december 2022 on beta
+    (Object.values(findModule((m) => {
+        if (typeof m !== 'object')
+            return false;
+        for (let prop in m) {
+            if (m[prop]?.m_mapModalManager && Object.values(m)?.find((x) => x?.type)) {
+                return true;
+            }
+        }
+        return false;
+    }) || {})?.find((x) => x?.type?.toString()?.includes('((function(){')) ||
+        // before december 2022 beta
+        Object.values(findModule((m) => {
+            if (typeof m !== 'object')
+                return false;
+            for (let prop in m) {
+                if (m[prop]?.toString()?.includes('"ModalManager","DialogWrapper"')) {
+                    return true;
+                }
+            }
+            return false;
+        }) || {})?.find((x) => x?.type?.toString()?.includes('((function(){')) ||
+        // old
+        findModuleChild((m) => {
+            if (typeof m !== 'object')
+                return undefined;
+            for (let prop in m) {
+                if (m[prop]?.prototype?.OK && m[prop]?.prototype?.Cancel && m[prop]?.prototype?.render) {
+                    return m[prop];
+                }
+            }
+        }));
+    const ModalModule = findModule((mod) => {
+        if (typeof mod !== 'object')
+            return false;
+        for (let prop in mod) {
+            if (Object.keys(mod).length > 4 && mod[prop]?.toString().includes('.ModalPosition,fallback:'))
+                return true;
+        }
+        return false;
+    });
+    const ModalModuleProps = ModalModule ? Object.values(ModalModule) : [];
+    ModalModuleProps.find(prop => {
+        const string = prop?.toString();
+        return string?.includes(".ShowPortalModal()") && string?.includes(".OnElementReadyCallbacks.Register(");
+    });
+    ModalModuleProps.find(prop => prop?.toString().includes(".ModalPosition,fallback:"));
+
+    findModuleChild((mod) => {
+        if (typeof mod !== 'object' || !mod.__esModule)
+            return undefined;
+        return mod.Panel;
+    });
+    const [panelSection, mod] = findModuleChild((mod) => {
+        for (let prop in mod) {
+            if (mod[prop]?.toString()?.includes('.PanelSection')) {
+                return [mod[prop], mod];
+            }
+        }
+        return null;
+    });
+    const PanelSection = panelSection;
+    // New as of Feb 22 2023 Beta || Old
+    const PanelSectionRow = (mod.PanelSectionRow ||
+        Object.values(mod).filter((exp) => !exp?.toString()?.includes('.PanelSection'))[0]);
+
+    var SideMenu;
+    (function (SideMenu) {
+        SideMenu[SideMenu["None"] = 0] = "None";
+        SideMenu[SideMenu["Main"] = 1] = "Main";
+        SideMenu[SideMenu["QuickAccess"] = 2] = "QuickAccess";
+    })(SideMenu || (SideMenu = {}));
+    var QuickAccessTab;
+    (function (QuickAccessTab) {
+        QuickAccessTab[QuickAccessTab["Notifications"] = 0] = "Notifications";
+        QuickAccessTab[QuickAccessTab["RemotePlayTogetherControls"] = 1] = "RemotePlayTogetherControls";
+        QuickAccessTab[QuickAccessTab["VoiceChat"] = 2] = "VoiceChat";
+        QuickAccessTab[QuickAccessTab["Friends"] = 3] = "Friends";
+        QuickAccessTab[QuickAccessTab["Settings"] = 4] = "Settings";
+        QuickAccessTab[QuickAccessTab["Perf"] = 5] = "Perf";
+        QuickAccessTab[QuickAccessTab["Help"] = 6] = "Help";
+        QuickAccessTab[QuickAccessTab["Music"] = 7] = "Music";
+        QuickAccessTab[QuickAccessTab["Decky"] = 999] = "Decky";
+    })(QuickAccessTab || (QuickAccessTab = {}));
+    var DisplayStatus;
+    (function (DisplayStatus) {
+        DisplayStatus[DisplayStatus["Invalid"] = 0] = "Invalid";
+        DisplayStatus[DisplayStatus["Launching"] = 1] = "Launching";
+        DisplayStatus[DisplayStatus["Uninstalling"] = 2] = "Uninstalling";
+        DisplayStatus[DisplayStatus["Installing"] = 3] = "Installing";
+        DisplayStatus[DisplayStatus["Running"] = 4] = "Running";
+        DisplayStatus[DisplayStatus["Validating"] = 5] = "Validating";
+        DisplayStatus[DisplayStatus["Updating"] = 6] = "Updating";
+        DisplayStatus[DisplayStatus["Downloading"] = 7] = "Downloading";
+        DisplayStatus[DisplayStatus["Synchronizing"] = 8] = "Synchronizing";
+        DisplayStatus[DisplayStatus["ReadyToInstall"] = 9] = "ReadyToInstall";
+        DisplayStatus[DisplayStatus["ReadyToPreload"] = 10] = "ReadyToPreload";
+        DisplayStatus[DisplayStatus["ReadyToLaunch"] = 11] = "ReadyToLaunch";
+        DisplayStatus[DisplayStatus["RegionRestricted"] = 12] = "RegionRestricted";
+        DisplayStatus[DisplayStatus["PresaleOnly"] = 13] = "PresaleOnly";
+        DisplayStatus[DisplayStatus["InvalidPlatform"] = 14] = "InvalidPlatform";
+        DisplayStatus[DisplayStatus["PreloadComplete"] = 16] = "PreloadComplete";
+        DisplayStatus[DisplayStatus["BorrowerLocked"] = 17] = "BorrowerLocked";
+        DisplayStatus[DisplayStatus["UpdatePaused"] = 18] = "UpdatePaused";
+        DisplayStatus[DisplayStatus["UpdateQueued"] = 19] = "UpdateQueued";
+        DisplayStatus[DisplayStatus["UpdateRequired"] = 20] = "UpdateRequired";
+        DisplayStatus[DisplayStatus["UpdateDisabled"] = 21] = "UpdateDisabled";
+        DisplayStatus[DisplayStatus["DownloadPaused"] = 22] = "DownloadPaused";
+        DisplayStatus[DisplayStatus["DownloadQueued"] = 23] = "DownloadQueued";
+        DisplayStatus[DisplayStatus["DownloadRequired"] = 24] = "DownloadRequired";
+        DisplayStatus[DisplayStatus["DownloadDisabled"] = 25] = "DownloadDisabled";
+        DisplayStatus[DisplayStatus["LicensePending"] = 26] = "LicensePending";
+        DisplayStatus[DisplayStatus["LicenseExpired"] = 27] = "LicenseExpired";
+        DisplayStatus[DisplayStatus["AvailForFree"] = 28] = "AvailForFree";
+        DisplayStatus[DisplayStatus["AvailToBorrow"] = 29] = "AvailToBorrow";
+        DisplayStatus[DisplayStatus["AvailGuestPass"] = 30] = "AvailGuestPass";
+        DisplayStatus[DisplayStatus["Purchase"] = 31] = "Purchase";
+        DisplayStatus[DisplayStatus["Unavailable"] = 32] = "Unavailable";
+        DisplayStatus[DisplayStatus["NotLaunchable"] = 33] = "NotLaunchable";
+        DisplayStatus[DisplayStatus["CloudError"] = 34] = "CloudError";
+        DisplayStatus[DisplayStatus["CloudOutOfDate"] = 35] = "CloudOutOfDate";
+        DisplayStatus[DisplayStatus["Terminating"] = 36] = "Terminating";
+    })(DisplayStatus || (DisplayStatus = {}));
+    const Router = findModuleChild((m) => {
+        if (typeof m !== 'object')
+            return undefined;
+        for (let prop in m) {
+            if (m[prop]?.Navigate && m[prop]?.NavigationManager)
+                return m[prop];
+        }
+    });
+    let Navigation = {};
+    try {
+        (async () => {
+            let InternalNavigators = {};
+            if (!Router.NavigateToAppProperties || Router.deckyShim) {
+                function initInternalNavigators() {
+                    try {
+                        InternalNavigators = findModuleChild((m) => {
+                            if (typeof m !== 'object')
+                                return undefined;
+                            for (let prop in m) {
+                                if (m[prop]?.GetNavigator && m[prop]?.SetNavigator) {
+                                    return m[prop];
+                                }
+                            }
+                        })?.GetNavigator();
+                    }
+                    catch (e) {
+                        console.error('[DFL:Router]: Failed to init internal navigators, trying again');
+                    }
+                }
+                initInternalNavigators();
+                while (!InternalNavigators?.AppProperties) {
+                    console.log('[DFL:Router]: Trying to init internal navigators again');
+                    await sleep(2000);
+                    initInternalNavigators();
+                }
+            }
+            const newNavigation = {
+                Navigate: Router.Navigate?.bind(Router),
+                NavigateBack: Router.WindowStore?.GamepadUIMainWindowInstance?.NavigateBack?.bind(Router.WindowStore.GamepadUIMainWindowInstance),
+                NavigateToAppProperties: InternalNavigators?.AppProperties || Router.NavigateToAppProperties?.bind(Router),
+                NavigateToExternalWeb: InternalNavigators?.ExternalWeb || Router.NavigateToExternalWeb?.bind(Router),
+                NavigateToInvites: InternalNavigators?.Invites || Router.NavigateToInvites?.bind(Router),
+                NavigateToChat: InternalNavigators?.Chat || Router.NavigateToChat?.bind(Router),
+                NavigateToLibraryTab: InternalNavigators?.LibraryTab || Router.NavigateToLibraryTab?.bind(Router),
+                NavigateToLayoutPreview: Router.NavigateToLayoutPreview?.bind(Router),
+                NavigateToSteamWeb: Router.WindowStore?.GamepadUIMainWindowInstance?.NavigateToSteamWeb?.bind(Router.WindowStore.GamepadUIMainWindowInstance),
+                OpenSideMenu: Router.WindowStore?.GamepadUIMainWindowInstance?.MenuStore.OpenSideMenu?.bind(Router.WindowStore.GamepadUIMainWindowInstance.MenuStore),
+                OpenQuickAccessMenu: Router.WindowStore?.GamepadUIMainWindowInstance?.MenuStore.OpenQuickAccessMenu?.bind(Router.WindowStore.GamepadUIMainWindowInstance.MenuStore),
+                OpenMainMenu: Router.WindowStore?.GamepadUIMainWindowInstance?.MenuStore.OpenMainMenu?.bind(Router.WindowStore.GamepadUIMainWindowInstance.MenuStore),
+                CloseSideMenus: Router.CloseSideMenus?.bind(Router),
+                OpenPowerMenu: Router.OpenPowerMenu?.bind(Router),
+            };
+            Object.assign(Navigation, newNavigation);
+        })();
+    }
+    catch (e) {
+        console.error('[DFL:Router]: Error initializing Navigation interface', e);
+    }
+
+    const SidebarNavigation = findModuleChild((mod) => {
+        for (let prop in mod) {
+            if (mod[prop]?.toString()?.includes('"disableRouteReporting"')) {
+                return mod[prop];
+            }
+        }
+        return null;
+    });
+
+    const SliderField = Object.values(CommonUIModule).find((mod) => mod?.toString()?.includes('SliderField,fallback'));
+
+    const quickAccessMenuClasses = findModule((mod) => typeof mod === 'object' && mod?.Title && mod?.QuickAccessMenu && mod?.BatteryDetailsLabels);
+    /**
+     * @depreciated please use quickAccessMenuClasses instead
+     */
+    const staticClasses = quickAccessMenuClasses;
+    findModule((mod) => typeof mod === 'object' && mod?.ScrollPanel);
+    // TODO refactor to use class mapper
+    const gamepadDialogClasses = findModule((mod) => typeof mod === 'object' && mod?.GamepadDialogContent);
+    const quickAccessControlsClasses = findModule((mod) => typeof mod === 'object' && typeof mod?.PanelSection === 'string' && mod?.PanelSection);
+    findModule((mod) => typeof mod === 'object' && mod?.OOBEUpdateStatusContainer);
+    findModule((mod) => typeof mod === 'object' && mod?.Container);
+    findModule((mod) => typeof mod === 'object' && mod?.SliderControlPanelGroup);
+    findModule((mod) => typeof mod === 'object' && mod?.TopCapsule);
+    findModule((mod) => typeof mod === 'object' && mod?.HeaderLoaded);
+    findModule((mod) => typeof mod === 'object' && mod?.BasicUiRoot);
+    findModule((mod) => typeof mod === 'object' && mod?.GamepadTabbedPage);
+    findModule((mod) => typeof mod === 'object' && mod?.BasicContextMenuModal);
+    findModule((mod) => typeof mod === 'object' && mod?.AchievementListItemBase);
+    findModule((mod) => typeof mod === 'object' && mod?.MainMenuAppRunning);
+    findModule((mod) => typeof mod === 'object' && mod?.AppDetailsRoot);
+
+    const TextField = Object.values(CommonUIModule).find((mod) => mod?.validateUrl && mod?.validateEmail);
+
+    const ToggleField = Object.values(CommonUIModule).find((mod) => mod?.render?.toString()?.includes('ToggleField,fallback'));
+
+    // TypeScript helper function
+    const definePlugin = (fn) => {
+        return (...args) => {
+            // TODO: Maybe wrap this
+            return fn(...args);
+        };
+    };
+
+    var DefaultContext = {
+      color: undefined,
+      size: undefined,
+      className: undefined,
+      style: undefined,
+      attr: undefined
+    };
+    var IconContext = React__default["default"].createContext && React__default["default"].createContext(DefaultContext);
+
+    var __assign = window && window.__assign || function () {
+      __assign = Object.assign || function (t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+          s = arguments[i];
+
+          for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+
+        return t;
+      };
+
+      return __assign.apply(this, arguments);
+    };
+
+    var __rest = window && window.__rest || function (s, e) {
+      var t = {};
+
+      for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0) t[p] = s[p];
+
+      if (s != null && typeof Object.getOwnPropertySymbols === "function") for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+        if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i])) t[p[i]] = s[p[i]];
+>>>>>>> branch 'main' of https://github.com/TeslaKang/GameAssistSteamOS.git
       }
       return t;
     };
+<<<<<<< HEAD
     return __assign.apply(this, arguments);
   };
   var __rest = window && window.__rest || function (s, e) {
@@ -29,7 +518,17 @@
     for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0) t[p] = s[p];
     if (s != null && typeof Object.getOwnPropertySymbols === "function") for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
       if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i])) t[p[i]] = s[p[i]];
+=======
+
+    function Tree2Element(tree) {
+      return tree && tree.map(function (node, i) {
+        return React__default["default"].createElement(node.tag, __assign({
+          key: i
+        }, node.attr), Tree2Element(node.child));
+      });
+>>>>>>> branch 'main' of https://github.com/TeslaKang/GameAssistSteamOS.git
     }
+<<<<<<< HEAD
     return t;
   };
   function Tree2Element(tree) {
@@ -45,6 +544,621 @@
       return React__default["default"].createElement(IconBase, __assign({
         attr: __assign({}, data.attr)
       }, props), Tree2Element(data.child));
+=======
+
+    function GenIcon(data) {
+      return function (props) {
+        return React__default["default"].createElement(IconBase, __assign({
+          attr: __assign({}, data.attr)
+        }, props), Tree2Element(data.child));
+      };
+    }
+    function IconBase(props) {
+      var elem = function (conf) {
+        var attr = props.attr,
+            size = props.size,
+            title = props.title,
+            svgProps = __rest(props, ["attr", "size", "title"]);
+
+        var computedSize = size || conf.size || "1em";
+        var className;
+        if (conf.className) className = conf.className;
+        if (props.className) className = (className ? className + ' ' : '') + props.className;
+        return React__default["default"].createElement("svg", __assign({
+          stroke: "currentColor",
+          fill: "currentColor",
+          strokeWidth: "0"
+        }, conf.attr, attr, svgProps, {
+          className: className,
+          style: __assign(__assign({
+            color: props.color || conf.color
+          }, conf.style), props.style),
+          height: computedSize,
+          width: computedSize,
+          xmlns: "http://www.w3.org/2000/svg"
+        }), title && React__default["default"].createElement("title", null, title), props.children);
+      };
+
+      return IconContext !== undefined ? React__default["default"].createElement(IconContext.Consumer, null, function (conf) {
+        return elem(conf);
+      }) : elem(DefaultContext);
+    }
+
+    // THIS FILE IS AUTO GENERATED
+    function IoApps (props) {
+      return GenIcon({"tag":"svg","attr":{"viewBox":"0 0 512 512"},"child":[{"tag":"path","attr":{"d":"M104 160a56 56 0 1156-56 56.06 56.06 0 01-56 56zm152 0a56 56 0 1156-56 56.06 56.06 0 01-56 56zm152 0a56 56 0 1156-56 56.06 56.06 0 01-56 56zM104 312a56 56 0 1156-56 56.06 56.06 0 01-56 56zm152 0a56 56 0 1156-56 56.06 56.06 0 01-56 56zm152 0a56 56 0 1156-56 56.06 56.06 0 01-56 56zM104 464a56 56 0 1156-56 56.06 56.06 0 01-56 56zm152 0a56 56 0 1156-56 56.06 56.06 0 01-56 56zm152 0a56 56 0 1156-56 56.06 56.06 0 01-56 56z"}}]})(props);
+    }
+
+    class PyInterop {
+        static setServer(serv) {
+            this.serverAPI = serv;
+        }
+        static async setSteamAppId(appId) {
+            return await this.serverAPI.callPluginMethod("setSteamAppId", { appId: appId });
+        }
+        static async setGlobalSetting(key, value) {
+            return await this.serverAPI.callPluginMethod("setGlobalSetting", { key: key, value: value });
+        }
+        static async getGlobalSetting(key) {
+            return await this.serverAPI.callPluginMethod("getGlobalSetting", { key: key });
+        }
+        static async getShortcuts() {
+            return await this.serverAPI.callPluginMethod("getShortcuts", {});
+        }
+        static async defGetShortcuts() {
+            return await this.serverAPI.callPluginMethod("defGetShortcuts", {});
+        }
+        static async setShortcuts(shortcuts) {
+            return await this.serverAPI.callPluginMethod("setShortcuts", { shortcuts: shortcuts });
+        }
+        static async runShortcuts(group) {
+            return await this.serverAPI.callPluginMethod("runShortcuts", { group: group });
+        }
+        static async modShortcut(shortcut) {
+            return await this.serverAPI.callPluginMethod("modShortcut", { shortcut: shortcut });
+        }
+        static async runProgram(cmd) {
+            return await this.serverAPI.callPluginMethod("runProgram", { cmd: cmd });
+        }
+        static async exeProgram(cmd) {
+            return await this.serverAPI.callPluginMethod("exeProgram", { cmd: cmd });
+        }
+        static async setLocale(loc) {
+            return await this.serverAPI.callPluginMethod("setLocale", { loc: loc });
+        }
+        static async getLocale() {
+            return await this.serverAPI.callPluginMethod("getLocale", {});
+        }
+        static async logPrint(logStr) {
+            return await this.serverAPI.callPluginMethod("logPrint", { logStr: logStr });
+        }
+        static async existHandyGCCS() {
+            return await this.serverAPI.callPluginMethod("existHandyGCCS", {});
+        }
+        static async getHandyGCCS(key) {
+            return await this.serverAPI.callPluginMethod("getHandyGCCS", { key: key });
+        }
+        static async setHandyGCCS(key, value) {
+            return await this.serverAPI.callPluginMethod("setHandyGCCS", { key: key, value: value });
+        }
+        static async getCpuTemp() {
+            return await this.serverAPI.callPluginMethod("getCpuTemp", {});
+        }
+        static async getFanValueType() {
+            return await this.serverAPI.callPluginMethod("getFanValueType", {});
+        }
+        static async getFanValue() {
+            return await this.serverAPI.callPluginMethod("getFanValue", {});
+        }
+        static async getCustomFanControl() {
+            return await this.serverAPI.callPluginMethod("getCustomFanControl", {});
+        }
+        static async setCustomFanControl(custom) {
+            return await this.serverAPI.callPluginMethod("setCustomFanControl", { custom: custom });
+        }
+        static async getLinearFanControl() {
+            return await this.serverAPI.callPluginMethod("getLinearFanControl", {});
+        }
+        static async setLinearFanControl(linear) {
+            return await this.serverAPI.callPluginMethod("setLinearFanControl", { linear: linear });
+        }
+        static async setFanCurveItems(items) {
+            return await this.serverAPI.callPluginMethod("setFanCurveItems", { items: items });
+        }
+        static async getFanCurveItems() {
+            return await this.serverAPI.callPluginMethod("getFanCurveItems", {});
+        }
+        static toast(title, message) {
+            return (() => {
+                try {
+                    return this.serverAPI.toaster.toast({
+                        title: title,
+                        body: message,
+                        duration: 1500,
+                    });
+                }
+                catch (e) {
+                    console.log("Toaster Error", e);
+                }
+            })();
+        }
+    }
+
+    class ControlType {
+    }
+    ControlType.BUTTON = 1;
+    ControlType.TOGGLE = 2;
+    ControlType.SLIDER = 3;
+    ControlType.GROUP = 4;
+    ControlType.CHOICE = 5;
+    class Shortcut {
+        constructor(id, name, cmd, position) {
+            // common
+            this.id = id;
+            this.position = position;
+            this.type = ControlType.BUTTON;
+            this.timeout = '1000';
+            this.name = name;
+            this.cmd = cmd;
+            this.desc = '';
+            this.group = '';
+            this.current = '';
+            // button
+            this.name1 = '';
+            this.cmd1 = '';
+            this.name2 = '';
+            this.cmd2 = '';
+            this.name3 = '';
+            this.cmd3 = '';
+            this.name4 = '';
+            this.cmd4 = '';
+            this.name5 = '';
+            this.cmd5 = '';
+            this.name6 = '';
+            this.cmd6 = '';
+            // toggle
+            this.checked = -1;
+            this.cmdCheck = '';
+            // slider
+            this.min = '1';
+            this.max = '100';
+            this.step = '1';
+            this.scale = '1';
+            this.value = '1';
+            this.suffix = '';
+        }
+    }
+    function GetControlType(selectedOption) {
+        if (selectedOption == 2)
+            return ControlType.TOGGLE;
+        else if (selectedOption == 3)
+            return ControlType.SLIDER;
+        else if (selectedOption == 4)
+            return ControlType.GROUP;
+        else if (selectedOption == 5)
+            return ControlType.CHOICE;
+        else
+            return ControlType.BUTTON;
+    }
+    class LANG {
+        static LocalizeEng() {
+            LANG.GAME_ASSIST = LANG.GAME_ASSIST_;
+            LANG.PROFILE_TITLE = LANG.PROFILE_TITLE_;
+            LANG.PROFILE_DEFAULT = LANG.PROFILE_DEFAULT_;
+            LANG.PROFILE_USING = LANG.PROFILE_USING_;
+            LANG.PROFILE_USE_GAME = LANG.PROFILE_USE_GAME_;
+            LANG.ITEM_MANAGER_TITLE = LANG.ITEM_MANAGER_TITLE_;
+            LANG.ITEM_MANAGER_SETTING = LANG.ITEM_MANAGER_SETTING_;
+            LANG.ITEM_MANAGER_ADD = LANG.ITEM_MANAGER_ADD_;
+            LANG.ITEM_MANAGER_EDIT = LANG.ITEM_MANAGER_EDIT_;
+            LANG.ITEM_MANAGER_HANDY = LANG.ITEM_MANAGER_HANDY_;
+            LANG.ITEM_MANAGER_ABOUT = LANG.ITEM_MANAGER_ABOUT_;
+            LANG.SETTING_LANG_AUTO = LANG.SETTING_LANG_AUTO_;
+            LANG.TOAST_SUCCESS = LANG.TOAST_SUCCESS_;
+            LANG.TOAST_ERROR = LANG.TOAST_ERROR_;
+            LANG.TOAST_SAVE = LANG.TOAST_SAVE_;
+            LANG.REORDER_SAVE = LANG.REORDER_SAVE_;
+            LANG.REORDER_EDIT = LANG.REORDER_EDIT_;
+            LANG.MANAGER_ITEM_ACTION = LANG.MANAGER_ITEM_ACTION_;
+            LANG.MANAGER_ITEM_EDIT = LANG.MANAGER_ITEM_EDIT_;
+            LANG.MANAGER_ITEM_DEL = LANG.MANAGER_ITEM_DEL_;
+            LANG.MANAGER_ITEM_DEL_QUERY = LANG.MANAGER_ITEM_DEL_QUERY_;
+            LANG.MANAGER_ITEM_DESC = LANG.MANAGER_ITEM_DESC_;
+            LANG.MANAGER_ITEM_INIT = LANG.MANAGER_ITEM_INIT_;
+            LANG.MANAGER_ITEM_LOADING = LANG.MANAGER_ITEM_LOADING_;
+            LANG.ITEM_TYPE_BUTTON = LANG.ITEM_TYPE_BUTTON_;
+            LANG.ITEM_TYPE_TOGGLE = LANG.ITEM_TYPE_TOGGLE_;
+            LANG.ITEM_TYPE_SLIDER = LANG.ITEM_TYPE_SLIDER_;
+            LANG.ITEM_TYPE_GROUP = LANG.ITEM_TYPE_GROUP_;
+            LANG.ITEM_TYPE_CHOICE = LANG.ITEM_TYPE_CHOICE_;
+            LANG.ITEM_UI_TYPE = LANG.ITEM_UI_TYPE_;
+            LANG.ITEM_UI_SELECT = LANG.ITEM_UI_SELECT_;
+            LANG.ITEM_UI_NAME = LANG.ITEM_UI_NAME_;
+            LANG.ITEM_UI_DESC = LANG.ITEM_UI_DESC_;
+            LANG.ITEM_UI_GROUP = LANG.ITEM_UI_GROUP_;
+            LANG.ITEM_UI_CMD_ON = LANG.ITEM_UI_CMD_ON_;
+            LANG.ITEM_UI_CMD_OFF = LANG.ITEM_UI_CMD_OFF_;
+            LANG.ITEM_UI_MIN = LANG.ITEM_UI_MIN_;
+            LANG.ITEM_UI_MAX = LANG.ITEM_UI_MAX_;
+            LANG.ITEM_UI_STEP = LANG.ITEM_UI_STEP_;
+            LANG.ITEM_UI_SCALE = LANG.ITEM_UI_SCALE_;
+            LANG.ITEM_UI_UNIT = LANG.ITEM_UI_UNIT_;
+            LANG.ITEM_UI_VALUE = LANG.ITEM_UI_VALUE_;
+            LANG.ITEM_UI_CMD = LANG.ITEM_UI_CMD_;
+            LANG.ITEM_UI_NAME1 = LANG.ITEM_UI_NAME1_;
+            LANG.ITEM_UI_CMD1 = LANG.ITEM_UI_CMD1_;
+            LANG.ITEM_UI_NAME2 = LANG.ITEM_UI_NAME2_;
+            LANG.ITEM_UI_CMD2 = LANG.ITEM_UI_CMD2_;
+            LANG.ITEM_UI_NAME3 = LANG.ITEM_UI_NAME3_;
+            LANG.ITEM_UI_CMD3 = LANG.ITEM_UI_CMD3_;
+            LANG.ITEM_UI_NAME4 = LANG.ITEM_UI_NAME4_;
+            LANG.ITEM_UI_CMD4 = LANG.ITEM_UI_CMD4_;
+            LANG.ITEM_UI_NAME5 = LANG.ITEM_UI_NAME5_;
+            LANG.ITEM_UI_CMD5 = LANG.ITEM_UI_CMD5_;
+            LANG.ITEM_UI_NAME6 = LANG.ITEM_UI_NAME6_;
+            LANG.ITEM_UI_CMD6 = LANG.ITEM_UI_CMD6_;
+            LANG.ITEM_UI_DELAY = LANG.ITEM_UI_DELAY_;
+            LANG.ITEM_UI_CURRENT = LANG.ITEM_UI_CURRENT_;
+            LANG.ITEM_UI_SAVE = LANG.ITEM_UI_SAVE_;
+            LANG.ITEM_UI_EDITING = LANG.ITEM_UI_EDITING_;
+            LANG.ABOUT_ITEM1 = LANG.ABOUT_ITEM1_;
+            LANG.ABOUT_ITEM2 = LANG.ABOUT_ITEM2_;
+            LANG.ABOUT_ITEM3 = LANG.ABOUT_ITEM3_;
+            LANG.ABOUT_ITEM4 = LANG.ABOUT_ITEM4_;
+            LANG.ABOUT_ITEM5 = LANG.ABOUT_ITEM5_;
+            LANG.ABOUT_ITEM6 = LANG.ABOUT_ITEM6_;
+            LANG.FAN_SPEED = LANG.FAN_SPEED_;
+            LANG.FAN_TEMPER = LANG.FAN_TEMPER_;
+            LANG.FAN_CURVE = LANG.FAN_CURVE_;
+            LANG.FAN_CURVE_DESC = LANG.FAN_CURVE_DESC_;
+            LANG.FAN_LINEAR = LANG.FAN_LINEAR_;
+            LANG.FAN_LINEAR_DESC = LANG.FAN_LINEAR_DESC_;
+        }
+        static LocalizeKor() {
+            LANG.GAME_ASSIST = "게임 도우미";
+            LANG.PROFILE_TITLE = "성능 설정";
+            LANG.PROFILE_DEFAULT = "기본";
+            LANG.PROFILE_USING = "{0} 프로필 사용중";
+            LANG.PROFILE_USE_GAME = "게임별 프로필 사용";
+            LANG.ITEM_MANAGER_TITLE = "게임 도우미 설정/항목 관리";
+            LANG.ITEM_MANAGER_SETTING = "설정";
+            LANG.ITEM_MANAGER_ADD = "항목 추가";
+            LANG.ITEM_MANAGER_EDIT = "항목 관리";
+            LANG.ITEM_MANAGER_HANDY = "HandyGCCS 설정";
+            LANG.ITEM_MANAGER_ABOUT = "게임 도우미 소개";
+            LANG.SETTING_LANG_AUTO = "자동선택";
+            LANG.TOAST_SUCCESS = "성공";
+            LANG.TOAST_ERROR = "에러";
+            LANG.TOAST_SAVE = "항목 저장";
+            LANG.REORDER_SAVE = "순서 저장";
+            LANG.REORDER_EDIT = "순서 바꾸기";
+            LANG.MANAGER_ITEM_ACTION = "동작";
+            LANG.MANAGER_ITEM_EDIT = "수정";
+            LANG.MANAGER_ITEM_DEL = "삭제";
+            LANG.MANAGER_ITEM_DEL_QUERY = "삭제 할까요?";
+            LANG.MANAGER_ITEM_DESC = "항목을 이동하거나 수정/삭제 할 수 있습니다.";
+            LANG.MANAGER_ITEM_INIT = "항목 초기화";
+            LANG.MANAGER_ITEM_LOADING = "로딩중...";
+            LANG.ITEM_TYPE_BUTTON = "버튼";
+            LANG.ITEM_TYPE_TOGGLE = "토글";
+            LANG.ITEM_TYPE_SLIDER = "슬라이더";
+            LANG.ITEM_TYPE_GROUP = "그룹";
+            LANG.ITEM_TYPE_CHOICE = "항목선택";
+            LANG.ITEM_UI_TYPE = "UI 형태";
+            LANG.ITEM_UI_SELECT = "형식 선택";
+            LANG.ITEM_UI_NAME = "이름";
+            LANG.ITEM_UI_DESC = "설명";
+            LANG.ITEM_UI_GROUP = "그룹 이름";
+            LANG.ITEM_UI_CMD_ON = "On Bash 명령어";
+            LANG.ITEM_UI_CMD_OFF = "Off Bash 명령어";
+            LANG.ITEM_UI_MIN = "최소값";
+            LANG.ITEM_UI_MAX = "최대값";
+            LANG.ITEM_UI_STEP = "단계값";
+            LANG.ITEM_UI_SCALE = "배율값";
+            LANG.ITEM_UI_UNIT = "단위";
+            LANG.ITEM_UI_VALUE = "Bash 명령어($v$는 값)";
+            LANG.ITEM_UI_CMD = "Bash 명령어";
+            LANG.ITEM_UI_NAME1 = "첫번째 이름";
+            LANG.ITEM_UI_CMD1 = "첫번째 Bash 명령어";
+            LANG.ITEM_UI_NAME2 = "두번째 이름";
+            LANG.ITEM_UI_CMD2 = "두번째 Bash 명령어";
+            LANG.ITEM_UI_NAME3 = "세번째 이름";
+            LANG.ITEM_UI_CMD3 = "세번째 Bash 명령어";
+            LANG.ITEM_UI_NAME4 = "네번째 이름";
+            LANG.ITEM_UI_CMD4 = "네번째 Bash 명령어";
+            LANG.ITEM_UI_NAME5 = "다섯번째 이름";
+            LANG.ITEM_UI_CMD5 = "다섯번째 Bash 명령어";
+            LANG.ITEM_UI_NAME6 = "여섯번째 이름";
+            LANG.ITEM_UI_CMD6 = "여섯번째 Bash 명령어";
+            LANG.ITEM_UI_DELAY = "지연 시간(ms)";
+            LANG.ITEM_UI_CURRENT = "현재 상태 명령어";
+            LANG.ITEM_UI_SAVE = "저장";
+            LANG.ITEM_UI_EDITING = "수정중: ";
+            LANG.ABOUT_ITEM1 = "게임 도우미(Game Assist)는 스팀 OS에서 시스템 전력을 쉽게 설정하기 위해서 만들어졌습니다.";
+            LANG.ABOUT_ITEM2 = "기본 프리셋으로 잘 동작하지만 원한다면 새로운 항목을 만들거나 수정/삭제할 수 있습니다.";
+            LANG.ABOUT_ITEM3 = "각각의 항목은 bash 명령어를 실행하는 방식으로 동작합니다.";
+            LANG.ABOUT_ITEM4 = "자세한 사항은 기본 항목을 참고하면 됩니다.";
+            LANG.ABOUT_ITEM5 = "제작자: 화랑, 기부: https://www.paypal.me/teslakang";
+            LANG.ABOUT_ITEM6 = "이 프로그램은 bash-shortcuts(https://github.com/Tormak9970/bash-shortcuts)과 Fanstic(https://github.com/NGnius/Fantastic)을 참고 했습니다.";
+            LANG.FAN_SPEED = "현재 팬 속도";
+            LANG.FAN_TEMPER = "현재 CPU 온도";
+            LANG.FAN_CURVE = "수동 팬 속도 조절";
+            LANG.FAN_CURVE_DESC = "기본 팬 곡선을 재정의합니다.";
+            LANG.FAN_LINEAR = "선형 보간";
+            LANG.FAN_LINEAR_DESC = "직선이 점을 연결하는 것처럼 가장합니다.";
+        }
+        static setLocale(locale) {
+            if (locale.indexOf("ko") >= 0 || locale.indexOf("KR") >= 0)
+                LANG.LocalizeKor();
+            else
+                LANG.LocalizeEng();
+        }
+    }
+    LANG.GAME_ASSIST_ = "Game Assist";
+    LANG.GAME_ASSIST = LANG.GAME_ASSIST_;
+    LANG.PROFILE_TITLE_ = "Performance Setting";
+    LANG.PROFILE_TITLE = LANG.PROFILE_TITLE_;
+    LANG.PROFILE_DEFAULT_ = "Default";
+    LANG.PROFILE_DEFAULT = LANG.PROFILE_DEFAULT_;
+    LANG.PROFILE_USING_ = "Using {0} Profile";
+    LANG.PROFILE_USING = LANG.PROFILE_USING_;
+    LANG.PROFILE_USE_GAME_ = "Use Game Profile";
+    LANG.PROFILE_USE_GAME = LANG.PROFILE_USE_GAME_;
+    LANG.ITEM_MANAGER_TITLE_ = "Setting/Manager Items";
+    LANG.ITEM_MANAGER_TITLE = LANG.ITEM_MANAGER_TITLE_;
+    LANG.ITEM_MANAGER_SETTING_ = "Setting";
+    LANG.ITEM_MANAGER_SETTING = LANG.ITEM_MANAGER_SETTING_;
+    LANG.ITEM_MANAGER_ADD_ = "Item Add";
+    LANG.ITEM_MANAGER_ADD = LANG.ITEM_MANAGER_ADD_;
+    LANG.ITEM_MANAGER_EDIT_ = "Item Edit";
+    LANG.ITEM_MANAGER_EDIT = LANG.ITEM_MANAGER_EDIT_;
+    LANG.ITEM_MANAGER_HANDY_ = "HandyGCCS Setting";
+    LANG.ITEM_MANAGER_HANDY = LANG.ITEM_MANAGER_HANDY_;
+    LANG.ITEM_MANAGER_ABOUT_ = "About";
+    LANG.ITEM_MANAGER_ABOUT = LANG.ITEM_MANAGER_ABOUT_;
+    LANG.SETTING_LANG_AUTO_ = "Auto Detect";
+    LANG.SETTING_LANG_AUTO = LANG.SETTING_LANG_AUTO_;
+    LANG.TOAST_SUCCESS_ = "Success";
+    LANG.TOAST_SUCCESS = LANG.TOAST_SUCCESS_;
+    LANG.TOAST_ERROR_ = "Error";
+    LANG.TOAST_ERROR = LANG.TOAST_ERROR_;
+    LANG.TOAST_SAVE_ = "Save";
+    LANG.TOAST_SAVE = LANG.TOAST_SAVE_;
+    LANG.REORDER_SAVE_ = "Save Order";
+    LANG.REORDER_SAVE = LANG.REORDER_SAVE_;
+    LANG.REORDER_EDIT_ = "Reorder";
+    LANG.REORDER_EDIT = LANG.REORDER_EDIT_;
+    LANG.MANAGER_ITEM_ACTION_ = "Action";
+    LANG.MANAGER_ITEM_ACTION = LANG.MANAGER_ITEM_ACTION_;
+    LANG.MANAGER_ITEM_EDIT_ = "Edit";
+    LANG.MANAGER_ITEM_EDIT = LANG.MANAGER_ITEM_EDIT_;
+    LANG.MANAGER_ITEM_DEL_ = "Delete";
+    LANG.MANAGER_ITEM_DEL = LANG.MANAGER_ITEM_DEL_;
+    LANG.MANAGER_ITEM_DEL_QUERY_ = "Are you want to delete";
+    LANG.MANAGER_ITEM_DEL_QUERY = LANG.MANAGER_ITEM_DEL_QUERY_;
+    LANG.MANAGER_ITEM_DESC_ = "You can order or edit or delete item.";
+    LANG.MANAGER_ITEM_DESC = LANG.MANAGER_ITEM_DESC_;
+    LANG.MANAGER_ITEM_INIT_ = "Item reset to default";
+    LANG.MANAGER_ITEM_INIT = LANG.MANAGER_ITEM_INIT_;
+    LANG.MANAGER_ITEM_LOADING_ = "Loading...";
+    LANG.MANAGER_ITEM_LOADING = LANG.MANAGER_ITEM_LOADING_;
+    LANG.ITEM_TYPE_BUTTON_ = "Button";
+    LANG.ITEM_TYPE_BUTTON = LANG.ITEM_TYPE_BUTTON_;
+    LANG.ITEM_TYPE_TOGGLE_ = "Toggle";
+    LANG.ITEM_TYPE_TOGGLE = LANG.ITEM_TYPE_TOGGLE_;
+    LANG.ITEM_TYPE_SLIDER_ = "Slider";
+    LANG.ITEM_TYPE_SLIDER = LANG.ITEM_TYPE_SLIDER_;
+    LANG.ITEM_TYPE_GROUP_ = "Group";
+    LANG.ITEM_TYPE_GROUP = LANG.ITEM_TYPE_GROUP_;
+    LANG.ITEM_TYPE_CHOICE_ = "Choice";
+    LANG.ITEM_TYPE_CHOICE = LANG.ITEM_TYPE_CHOICE_;
+    LANG.ITEM_UI_TYPE_ = "UI Type";
+    LANG.ITEM_UI_TYPE = LANG.ITEM_UI_TYPE_;
+    LANG.ITEM_UI_SELECT_ = "Select Type";
+    LANG.ITEM_UI_SELECT = LANG.ITEM_UI_SELECT_;
+    LANG.ITEM_UI_NAME_ = "Name";
+    LANG.ITEM_UI_NAME = LANG.ITEM_UI_NAME_;
+    LANG.ITEM_UI_DESC_ = "Description";
+    LANG.ITEM_UI_DESC = LANG.ITEM_UI_DESC_;
+    LANG.ITEM_UI_GROUP_ = "Group Name";
+    LANG.ITEM_UI_GROUP = LANG.ITEM_UI_GROUP_;
+    LANG.ITEM_UI_CMD_ON_ = "On Bash Command";
+    LANG.ITEM_UI_CMD_ON = LANG.ITEM_UI_CMD_ON_;
+    LANG.ITEM_UI_CMD_OFF_ = "Off Bash Command";
+    LANG.ITEM_UI_CMD_OFF = LANG.ITEM_UI_CMD_OFF_;
+    LANG.ITEM_UI_MIN_ = "Min Value";
+    LANG.ITEM_UI_MIN = LANG.ITEM_UI_MIN_;
+    LANG.ITEM_UI_MAX_ = "Max Value";
+    LANG.ITEM_UI_MAX = LANG.ITEM_UI_MAX_;
+    LANG.ITEM_UI_STEP_ = "Step Value";
+    LANG.ITEM_UI_STEP = LANG.ITEM_UI_STEP_;
+    LANG.ITEM_UI_SCALE_ = "Scale Value";
+    LANG.ITEM_UI_SCALE = LANG.ITEM_UI_SCALE_;
+    LANG.ITEM_UI_UNIT_ = "Unit";
+    LANG.ITEM_UI_UNIT = LANG.ITEM_UI_UNIT_;
+    LANG.ITEM_UI_VALUE_ = "Bash Command($v$ is value)";
+    LANG.ITEM_UI_VALUE = LANG.ITEM_UI_VALUE_;
+    LANG.ITEM_UI_CMD_ = "Bash Command";
+    LANG.ITEM_UI_CMD = LANG.ITEM_UI_CMD_;
+    LANG.ITEM_UI_NAME1_ = "First Name";
+    LANG.ITEM_UI_NAME1 = LANG.ITEM_UI_NAME1_;
+    LANG.ITEM_UI_CMD1_ = "First Bash Command";
+    LANG.ITEM_UI_CMD1 = LANG.ITEM_UI_CMD1_;
+    LANG.ITEM_UI_NAME2_ = "Second Name";
+    LANG.ITEM_UI_NAME2 = LANG.ITEM_UI_NAME2_;
+    LANG.ITEM_UI_CMD2_ = "Second Bash Command";
+    LANG.ITEM_UI_CMD2 = LANG.ITEM_UI_CMD2_;
+    LANG.ITEM_UI_NAME3_ = "Third Name";
+    LANG.ITEM_UI_NAME3 = LANG.ITEM_UI_NAME3_;
+    LANG.ITEM_UI_CMD3_ = "Third Bash Command";
+    LANG.ITEM_UI_CMD3 = LANG.ITEM_UI_CMD3_;
+    LANG.ITEM_UI_NAME4_ = "Forth Name";
+    LANG.ITEM_UI_NAME4 = LANG.ITEM_UI_NAME4_;
+    LANG.ITEM_UI_CMD4_ = "Forth Bash Command";
+    LANG.ITEM_UI_CMD4 = LANG.ITEM_UI_CMD4_;
+    LANG.ITEM_UI_NAME5_ = "Fifth Name";
+    LANG.ITEM_UI_NAME5 = LANG.ITEM_UI_NAME5_;
+    LANG.ITEM_UI_CMD5_ = "Fifth Bash Command";
+    LANG.ITEM_UI_CMD5 = LANG.ITEM_UI_CMD5_;
+    LANG.ITEM_UI_NAME6_ = "Sixth Name";
+    LANG.ITEM_UI_NAME6 = LANG.ITEM_UI_NAME6_;
+    LANG.ITEM_UI_CMD6_ = "Sixth Bash Command";
+    LANG.ITEM_UI_CMD6 = LANG.ITEM_UI_CMD6_;
+    LANG.ITEM_UI_DELAY_ = "Delay Time(ms)";
+    LANG.ITEM_UI_DELAY = LANG.ITEM_UI_DELAY_;
+    LANG.ITEM_UI_CURRENT_ = "Current Bash Command";
+    LANG.ITEM_UI_CURRENT = LANG.ITEM_UI_CURRENT_;
+    LANG.ITEM_UI_SAVE_ = "Save";
+    LANG.ITEM_UI_SAVE = LANG.ITEM_UI_SAVE_;
+    LANG.ITEM_UI_EDITING_ = "Editing: ";
+    LANG.ITEM_UI_EDITING = LANG.ITEM_UI_EDITING_;
+    LANG.ABOUT_ITEM1_ = "Game Assist was created to easily configure system power settings in SteamOS.";
+    LANG.ABOUT_ITEM1 = LANG.ABOUT_ITEM1_;
+    LANG.ABOUT_ITEM2_ = "It works well with the default presets, but you can create new ones or edit/delete them if you want.";
+    LANG.ABOUT_ITEM2 = LANG.ABOUT_ITEM2_;
+    LANG.ABOUT_ITEM3_ = "Each item operates by executing bash commands.";
+    LANG.ABOUT_ITEM3 = LANG.ABOUT_ITEM3_;
+    LANG.ABOUT_ITEM4_ = "For further details, please refer to the basic items.";
+    LANG.ABOUT_ITEM4 = LANG.ABOUT_ITEM4_;
+    LANG.ABOUT_ITEM5_ = "Author: Hwarang, Donation: https://www.paypal.me/teslakang";
+    LANG.ABOUT_ITEM5 = LANG.ABOUT_ITEM5_;
+    LANG.ABOUT_ITEM6_ = "This program refers to bash-shortcuts(https://github.com/Tormak9970/bash-shortcuts) and Fanstic(https://github.com/NGnius/Fantastic).";
+    LANG.ABOUT_ITEM6 = LANG.ABOUT_ITEM6_;
+    LANG.FAN_SPEED_ = "Current Fan Speed";
+    LANG.FAN_SPEED = LANG.FAN_SPEED_;
+    LANG.FAN_TEMPER_ = "Current Temperature";
+    LANG.FAN_TEMPER = LANG.FAN_TEMPER_;
+    LANG.FAN_CURVE_ = "Custom Fan Curve";
+    LANG.FAN_CURVE = LANG.FAN_CURVE_;
+    LANG.FAN_CURVE_DESC_ = "Overrides Default fan curve";
+    LANG.FAN_CURVE_DESC = LANG.FAN_CURVE_DESC_;
+    LANG.FAN_LINEAR_ = "Linear Interpolation";
+    LANG.FAN_LINEAR = LANG.FAN_LINEAR_;
+    LANG.FAN_LINEAR_DESC_ = "Pretends a straight line connects points";
+    LANG.FAN_LINEAR_DESC = LANG.FAN_LINEAR_DESC_;
+
+    class ShortcutsState {
+        constructor() {
+            this.shortcuts = {};
+            this.shortcutsList = [];
+            this.reorderableShortcuts = [];
+            this.gameAppId = "";
+            this.gameDisplayName = "";
+            this.visibleMap = new Map;
+            this.sliderGroupMap = new Map;
+            this.sliderUpdateMap = new Map;
+            this.eventBus = new EventTarget();
+        }
+        getPublicState() {
+            return {
+                "shortcuts": this.shortcuts,
+                "shortcutsList": this.shortcutsList,
+                "reorderableShortcuts": this.reorderableShortcuts,
+                "gameAppId": this.gameAppId,
+                "gameDisplayName": this.gameDisplayName,
+                "visibleMap": this.visibleMap,
+                "sliderGroupMap": this.sliderGroupMap,
+                "sliderUpdateMap": this.sliderUpdateMap
+            };
+        }
+        setGameAppId(gameAppId) {
+            this.gameAppId = gameAppId;
+            this.forceUpdate();
+        }
+        setGameDisplayName(gameDisplayName) {
+            this.gameDisplayName = gameDisplayName;
+            this.forceUpdate();
+        }
+        setVisibleMap(visibleMap) {
+            this.visibleMap = visibleMap;
+            this.forceUpdate();
+        }
+        updateStateMap() {
+            let visMap = new Map();
+            for (let i = 0; i < this.shortcutsList.length; i++) {
+                if (this.shortcutsList[i].type == ControlType.SLIDER && this.shortcutsList[i].group != "") {
+                    this.sliderGroupMap.set(this.shortcutsList[i].group, this.shortcutsList[i]);
+                }
+                if (this.shortcutsList[i].type == ControlType.GROUP && this.shortcutsList[i].group != "") {
+                    visMap.set(this.shortcutsList[i].group, this.shortcutsList[i].checked == 1);
+                }
+                if (this.shortcutsList[i].type == ControlType.SLIDER || this.shortcutsList[i].type == ControlType.CHOICE) {
+                    let sliderUpdate = this.sliderUpdateMap.get(this.shortcutsList[i].id);
+                    if (sliderUpdate != undefined)
+                        sliderUpdate(parseFloat(this.shortcutsList[i].value));
+                }
+            }
+            this.setVisibleMap(visMap);
+        }
+        updateAll() {
+            this.forceUpdate();
+        }
+        setShortcuts(shortcuts, isSave) {
+            if (shortcuts != null) {
+                this.shortcuts = shortcuts;
+                this.shortcutsList = Object.values(this.shortcuts).sort((a, b) => a.position - b.position);
+                this.reorderableShortcuts = [];
+                for (let i = 0; i < this.shortcutsList.length; i++) {
+                    const shortcut = this.shortcutsList[i];
+                    this.reorderableShortcuts[i] = {
+                        "position": shortcut.position,
+                        "label": shortcut.name,
+                        "data": shortcut
+                    };
+                }
+                this.reorderableShortcuts.sort((a, b) => a.position - b.position);
+                if (isSave)
+                    PyInterop.setShortcuts(this.shortcutsList);
+            }
+            this.forceUpdate();
+        }
+        forceUpdate() {
+            this.eventBus.dispatchEvent(new Event("stateUpdate"));
+        }
+    }
+    const ShortcutsContext = React.createContext(null);
+    const useShortcutsState = () => React.useContext(ShortcutsContext);
+    const ShortcutsContextProvider = ({ children, shortcutsStateClass }) => {
+        const [publicState, setPublicState] = React.useState({
+            ...shortcutsStateClass.getPublicState()
+        });
+        React.useEffect(() => {
+            function onUpdate() {
+                setPublicState({ ...shortcutsStateClass.getPublicState() });
+            }
+            shortcutsStateClass.eventBus.addEventListener("stateUpdate", onUpdate);
+            return () => {
+                shortcutsStateClass.eventBus.removeEventListener("stateUpdate", onUpdate);
+            };
+        }, []);
+        const setShortcuts = (shortcuts, isSave) => {
+            shortcutsStateClass.setShortcuts(shortcuts, isSave);
+        };
+        const setGameAppId = (gameAppId) => {
+            shortcutsStateClass.setGameAppId(gameAppId);
+        };
+        const setGameDisplayName = (gameDisplayName) => {
+            shortcutsStateClass.setGameDisplayName(gameDisplayName);
+        };
+        const setVisibleMap = (visibleMap) => {
+            shortcutsStateClass.setVisibleMap(visibleMap);
+        };
+        const updateStateMap = () => {
+            shortcutsStateClass.updateStateMap();
+        };
+        const updateAll = () => {
+            shortcutsStateClass.updateAll();
+        };
+        return (window.SP_REACT.createElement(ShortcutsContext.Provider, { value: {
+                ...publicState,
+                setShortcuts,
+                setGameAppId,
+                setGameDisplayName,
+                setVisibleMap,
+                updateStateMap,
+                updateAll,
+            } }, children));
+>>>>>>> branch 'main' of https://github.com/TeslaKang/GameAssistSteamOS.git
     };
   }
   function IconBase(props) {
@@ -914,6 +2028,7 @@
     return unsafeStringify(rnds);
   }
 
+<<<<<<< HEAD
   function AddShortcut() {
       const { shortcuts, setShortcuts, shortcutsList } = useShortcutsState();
       const [ableToSave, setAbleToSave] = React.useState(false);
@@ -1040,6 +2155,28 @@
           const ref = { ...shortcuts };
           ref[newShort.id] = newShort;
           setShortcuts(ref, true);
+=======
+    const byteToHex = [];
+
+    for (let i = 0; i < 256; ++i) {
+      byteToHex.push((i + 0x100).toString(16).slice(1));
+    }
+
+    function unsafeStringify(arr, offset = 0) {
+      // Note: Be careful editing this code!  It's been tuned for performance
+      // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
+      return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
+    }
+
+    const randomUUID = typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID.bind(crypto);
+    var native = {
+      randomUUID
+    };
+
+    function v4(options, buf, offset) {
+      if (native.randomUUID && !buf && !options) {
+        return native.randomUUID();
+>>>>>>> branch 'main' of https://github.com/TeslaKang/GameAssistSteamOS.git
       }
       React.useEffect(() => {
           let type = GetControlType(selectedOption);
