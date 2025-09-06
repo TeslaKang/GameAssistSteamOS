@@ -37,8 +37,10 @@ def get_user():
     global USER_NAME
     cmd = "who | awk '{print $1}' | sort | head -1"
     count = 0
+    env = os.environ.copy()
+    env.pop("LD_LIBRARY_PATH", None)
     while USER_NAME is None:
-        USER_LIST = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+        USER_LIST = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True,env=env)
         for get_first in USER_LIST.stdout:
             name = get_first.decode().strip()
             if name is not None:
@@ -83,8 +85,10 @@ def steam_ifrunning_deckui(cmd):
         return False
 
     steam_path = HOME_DIR + '/.steam/root/ubuntu12_32/steam'
+    env = os.environ.copy()
+    env.pop("LD_LIBRARY_PATH", None)
     try:
-        result = subprocess.run(["su", USER_NAME, "-c", f"{steam_path} -ifrunning {cmd}"])
+        result = subprocess.run(["su", USER_NAME, "-c", f"{steam_path} -ifrunning {cmd}"],env=env)
         log(f"{steam_path} {cmd} {result.returncode}")
         return result.returncode == 0
     except Exception as err:
@@ -229,11 +233,19 @@ class Plugin:
             if (steam_ifrunning_deckui("steam://longpowerpress") == True):
                 return True
 
-        res = subprocess.call([cmd], shell=True)
-        return res == 0
+        env = os.environ.copy()
+        env.pop("LD_LIBRARY_PATH", None)
+        res = subprocess.run([cmd], shell=True,capture_output=True,text=True,env=env)
+        #log(f"subprocess.run {res}") 
+        #log(f"stdout:  {res.stdout}")
+        #log(f"stderr: {res.stderr}")
+        #log(f"returncode: {res.returncode}")
+        return res.returncode == 0
 
     def _exeProgram(self, cmd):
-        p = subprocess.run([cmd], capture_output=True, text=True)
+        env = os.environ.copy()
+        env.pop("LD_LIBRARY_PATH", None)
+        p = subprocess.run([cmd], capture_output=True, text=True,env=env)
         return p.stdout
         
     def _exeProgram2(self, cmd, defValue):

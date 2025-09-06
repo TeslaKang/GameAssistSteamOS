@@ -2,8 +2,6 @@ import { Field, Focusable, PanelSection, PanelSectionRow, TextField, ButtonItem,
 import { Fragment, useState, useEffect } from "react"
 import { PyInterop } from "../../PyInterop";
 import { Shortcut, ControlType, GetControlType, LANG } from "../../lib/data-structures/Shortcut";
-
-import {v4 as uuidv4} from "uuid";
 import { useShortcutsState } from "../../state/ShortcutsState";
 
 export function AddShortcut() {
@@ -84,8 +82,16 @@ export function AddShortcut() {
 	const [ITEM_UI_DELAY] = useState<string>(LANG.ITEM_UI_DELAY);
 	const [ITEM_UI_CURRENT] = useState<string>(LANG.ITEM_UI_CURRENT);	
 
-	function saveShortcut() {
-		let newShort = new Shortcut(uuidv4(), name, cmd, shortcutsList.length+1);
+function generateUUID(): string {
+  	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    	const r = Math.random() * 16 | 0; // 0~15 bewtin int
+    	const v = char === 'x' ? r : (r & 0x3 | 0x8); //apply  UUID v4 rule
+    	return v.toString(16);
+  	});
+}
+
+function saveShortcut() {
+		let newShort = new Shortcut(generateUUID(), name, cmd, shortcutsList.length+1);
 
 		// common
 		newShort.type = GetControlType(selectedOption);
