@@ -1,5 +1,5 @@
 import { ConfirmModal, Menu, MenuItem, showContextMenu, showModal, ButtonItem, DialogButton } from "decky-frontend-lib";
-import { Fragment, VFC, useRef } from "react";
+import { Fragment, VFC, useEffect } from "react";
 import { PyInterop } from "../../PyInterop";
 import { Shortcut, LANG } from "../../lib/data-structures/Shortcut";
 import { ReorderableEntry, ReorderableList} from "../utils/ReorderableList";
@@ -14,7 +14,13 @@ type ActionButtonProps<T> = {
 
 export function ManageShortcuts() {
     const { shortcuts, setShortcuts, shortcutsList, reorderableShortcuts } = useShortcutsState();
-    const count = useRef(0);
+    useEffect(() => {
+        let active = true;
+        PyInterop.getShortcuts().then(res => {
+            if (active && res.success) setShortcuts(res.result as ShortcutsDictionary, false);
+        }).catch(console.error);
+        return () => { active = false; };
+    }, []);
 
     const ActionButton: VFC<ActionButtonProps<Shortcut>> = (props: ActionButtonProps<Shortcut>) => {
         function onAction(entryReference: ReorderableEntry<Shortcut>): void {
@@ -25,7 +31,7 @@ export function ManageShortcuts() {
                         showModal(
                         // @ts-ignore
                             <EditModal onConfirm={(updated: Shortcut) => {
-                                let shorts = shortcuts;
+                                let shorts = {...shortcuts};
                                 shorts[shortcut.id] = updated;
                                 setShortcuts(shorts, true);
                             }} shortcut={shortcut} />
@@ -34,7 +40,7 @@ export function ManageShortcuts() {
                     <MenuItem onSelected={() => {
                         showModal(
                             <ConfirmModal onOK={() => {
-                                let shorts = shortcuts;
+                                let shorts = {...shortcuts};
                                 delete shorts[shortcut.id];
                                 setShortcuts(shorts, true);
                             }} bDestructiveWarning={true}>
@@ -43,7 +49,7 @@ export function ManageShortcuts() {
                     )}}>{LANG.MANAGER_ITEM_DEL}</MenuItem>
                 </Menu>,
                 window
-            );    
+            );
         }
 
         return (
@@ -55,8 +61,9 @@ export function ManageShortcuts() {
 
     async function reloadDefault() {
         await PyInterop.defGetShortcuts().then((res) => {
+            if (!res.success) return;
             setShortcuts(res.result as ShortcutsDictionary, false);
-            if (res.success) PyInterop.toast(LANG.TOAST_SUCCESS, LANG.MANAGER_ITEM_INIT);
+            PyInterop.toast(LANG.TOAST_SUCCESS, LANG.MANAGER_ITEM_INIT);
         });
     }
 
@@ -82,11 +89,6 @@ export function ManageShortcuts() {
         );
     }
 
-    if (shortcutsList.length === 0 && count.current < 10) {
-        reloadDefault();
-        count.current++;
-    }
-    
     return (
         <>
             <div style={{

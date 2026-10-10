@@ -8,6 +8,9 @@ import shlex
 import pathlib
 import locale
 import ctypes
+import sys
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "backend"))
+from runtime import user_home, detect, supported, resolve, ROOT
 import configparser
 from genericpath import exists
 from subprocess import check_output, CalledProcessError, STDOUT
@@ -29,27 +32,15 @@ ControlTypeSlider = 3
 ControlTypeGroup = 4
 ControlTypeChoice = 5
 
-HOME_DIR = str(pathlib.Path(os.getcwd()).parent.parent.resolve())
+USER_NAME, HOME_DIR = user_home()
+CONFIG_DIR = pathlib.Path(HOME_DIR) / ".config" / "GameAssist"
+CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 CURRENT_DIR = str(pathlib.Path(__file__).parent.resolve())
-USER_NAME = None
+CAPABILITIES = detect()
 
 def get_user():
-    global USER_NAME
-    cmd = "who | awk '{print $1}' | sort | head -1"
-    count = 0
-    env = os.environ.copy()
-    env.pop("LD_LIBRARY_PATH", None)
-    while USER_NAME is None:
-        USER_LIST = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True,env=env)
-        for get_first in USER_LIST.stdout:
-            name = get_first.decode().strip()
-            if name is not None:
-                USER_NAME = name
-            break
-        sleep(1)
-        count = count + 1
-        if count > 3:
-            USER_NAME = "deck"
+    return USER_NAME
+
 
 def steam_ifrunning_deckui(cmd):
     global HOME_DIR
@@ -233,7 +224,12 @@ class Plugin:
             if (steam_ifrunning_deckui("steam://longpowerpress") == True):
                 return True
 
+        if not supported(cmd, CAPABILITIES):
+            return False
+        cmd = resolve(cmd)
         env = os.environ.copy()
+        env["GAMEASSIST_CONFIG_DIR"] = str(CONFIG_DIR)
+        env["GAMEASSIST_TDP_BACKEND"] = str(CAPABILITIES["tdp"])
         env.pop("LD_LIBRARY_PATH", None)
         res = subprocess.run([cmd], shell=True,capture_output=True,text=True,env=env)
         #log(f"subprocess.run {res}") 
@@ -245,7 +241,11 @@ class Plugin:
     def _exeProgram(self, cmd):
         env = os.environ.copy()
         env.pop("LD_LIBRARY_PATH", None)
-        p = subprocess.run([cmd], capture_output=True, text=True,env=env)
+        if not supported(cmd, CAPABILITIES):
+            return ""
+        env["GAMEASSIST_CONFIG_DIR"] = str(CONFIG_DIR)
+        env["GAMEASSIST_TDP_BACKEND"] = str(CAPABILITIES["tdp"])
+        p = subprocess.run(shlex.split(resolve(cmd)), capture_output=True, text=True,env=env)
         return p.stdout
         
     def _exeProgram2(self, cmd, defValue):
@@ -383,6 +383,8 @@ class Plugin:
                             "name1": v.name1, "cmd1": v.cmd1, "name2": v.name2, "cmd2": v.cmd2, "name3": v.name3, "cmd3": v.cmd3,
                             "name4": v.name4, "cmd4": v.cmd4, "name5": v.name5, "cmd5": v.cmd5, "name6": v.name6, "cmd6": v.cmd6 }
 
+        if not small:
+            res = {k: v for k, v in res.items() if supported(" ".join(str(v.get(key, "")) for key in ("cmd", "cmd1", "cmd2", "cmd3", "cmd4", "cmd5", "cmd6", "current")), CAPABILITIES)}
         return res
 
     def saveShortcuts(self):
@@ -407,7 +409,8 @@ class Plugin:
                         v['id'] = k
                         v['position'] = position
                         Map[k] = Shortcut(v)
-                        self.getSetting(self, Map[k])
+                        if supported(" ".join(str(v.get(key, "")) for key in ("cmd", "cmd1", "cmd2", "cmd3", "cmd4", "cmd5", "cmd6", "current")), CAPABILITIES):
+                            self.getSetting(self, Map[k])
 #                        log(f"Added shortcut {v['name']}")
                         position = position + 1
 
@@ -421,6 +424,17 @@ class Plugin:
 
     def _setShortcuts(self, shortcuts):
         Map = {}
+        # The UI receives only supported entries. Preserve omitted hidden entries,
+        # but allow the user to delete entries which were actually visible.
+        if exists(self.shortcutsItemPath):
+            with open(self.shortcutsItemPath, "r") as file:
+                stored = json.load(file)
+            for key, value in stored.items():
+                commands = " ".join(str(value.get(field, "")) for field in
+                                    ("cmd", "cmd1", "cmd2", "cmd3", "cmd4", "cmd5", "cmd6", "current"))
+                if not supported(commands, CAPABILITIES):
+                    value['id'] = key
+                    Map[key] = Shortcut(value)
 
         for shortcut in shortcuts:
             Map[shortcut['id']] = Shortcut(shortcut)
@@ -504,7 +518,7 @@ class Plugin:
                 "desc": TransLang(PRESET_TDP_DESC),
                 "group": "GroupTDP",
                 "timeout": "0",
-                "cmd": "/usr/share/GameAssist/resetTDP.sh",
+                "cmd": "@gameassist/resetTDP.sh",
             },
             "00000000-0000-0000-0000-000000000002": {
                 "name": TransLang(PRESET_CPU_POWER_NAME),
@@ -515,27 +529,27 @@ class Plugin:
                 "step": "1",
                 "scale": "1",
                 "suffix": TransLang(PRESET_CPU_POWER_UNIT),
-                "cmd": "/usr/share/GameAssist/setTDP.sh $v$",
+                "cmd": "@gameassist/setTDP.sh $v$",
             },
             "00000000-0000-0000-0000-000000000003": {
                 "name": "7W",
                 "type": 1,
-                "cmd": "/usr/share/GameAssist/setTDP.sh 7",
+                "cmd": "@gameassist/setTDP.sh 7",
                 "group": "GroupTDP",
                 "name1": "9W",
-                "cmd1": "/usr/share/GameAssist/setTDP.sh 9",
+                "cmd1": "@gameassist/setTDP.sh 9",
                 "name2": "12W",
-                "cmd2": "/usr/share/GameAssist/setTDP.sh 12"
+                "cmd2": "@gameassist/setTDP.sh 12"
             },
             "00000000-0000-0000-0000-000000000004": {
                 "name": "15W",
                 "type": 1,
-                "cmd": "/usr/share/GameAssist/setTDP.sh 15",
+                "cmd": "@gameassist/setTDP.sh 15",
                 "group": "GroupTDP",
                 "name1": "20W",
-                "cmd1": "/usr/share/GameAssist/setTDP.sh 20",
+                "cmd1": "@gameassist/setTDP.sh 20",
                 "name2": "25W",
-                "cmd2": "/usr/share/GameAssist/setTDP.sh 25"
+                "cmd2": "@gameassist/setTDP.sh 25"
             },
             "00000000-0000-0000-0000-000000000005": {
                 "name": TransLang(PRESET_GPU_CLOCK_NAME),
@@ -543,7 +557,7 @@ class Plugin:
                 "desc": TransLang(PRESET_GPU_CLOCK_DESC),
                 "group": "Group GPU CLOCK",
                 "timeout": "0",
-                "cmd": "/usr/share/GameAssist/resetGPU.sh"
+                "cmd": "@gameassist/resetGPU.sh"
             },
             "00000000-0000-0000-0000-000000000006": {
                 "name": TransLang(PRESET_GPU_CLOCK),
@@ -554,7 +568,7 @@ class Plugin:
                 "step": "100",
                 "scale": "1",
                 "suffix": " MHz",
-                "cmd": "/usr/share/GameAssist/setGPU.sh $v$"
+                "cmd": "@gameassist/setGPU.sh $v$"
             },
             "00000000-0000-0000-0000-000000000007": {
                 "name": TransLang(PRESET_CPU_CLOCK_NAME),
@@ -562,7 +576,7 @@ class Plugin:
                 "desc": TransLang(PRESET_CPU_CLOCK_DESC),
                 "group": "Group CPU CLOCK",
                 "timeout": "0",
-                "cmd": "/usr/share/GameAssist/resetCPU.sh"
+                "cmd": "@gameassist/resetCPU.sh"
             },
             "00000000-0000-0000-0000-000000000008": {
                 "name": TransLang(PRESET_CPU_CLOCK_MAX),
@@ -573,7 +587,7 @@ class Plugin:
                 "step": "100",
                 "scale": "1",
                 "suffix": " MHz",
-                "cmd": "/usr/share/GameAssist/setCPU.sh $v$"
+                "cmd": "@gameassist/setCPU.sh $v$"
             },
             "00000000-0000-0000-0000-000000000009": {
                 "name": TransLang(PRESET_CPU_ADV_NAME),
@@ -581,43 +595,46 @@ class Plugin:
                 "desc": TransLang(PRESET_CPU_ADV_DESC),
                 "group": "Advance CPU",
                 "timeout": "0",
-                "cmd": "/usr/share/GameAssist/resetAdvCPU.sh"
+                "cmd": "@gameassist/resetAdvCPU.sh"
             },
             "00000000-0000-0000-0000-000000000010": {
                 "name": TransLang(PRESET_SMT_NAME),
                 "type": 2,
                 "desc": TransLang(PRESET_SMT_DESC),
                 "group": "Advance CPU",
-                "cmd": "/usr/share/GameAssist/setSMT.sh off",
-                "cmd1": "/usr/share/GameAssist/setSMT.sh on",
-                "current": "/usr/share/GameAssist/getSMT.sh"
+                "cmd": "@gameassist/setSMT.sh off",
+                "cmd1": "@gameassist/setSMT.sh on",
+                "current": "@gameassist/getSMT.sh"
             },
             "00000000-0000-0000-0000-000000000011": {
                 "name": TransLang(PRESET_BOOST_NAME),
                 "type": 2,
                 "desc": TransLang(PRESET_BOOST_DESC),
                 "group": "Advance CPU",
-                "cmd": "/usr/share/GameAssist/setBOOST.sh 0",
-                "cmd1": "/usr/share/GameAssist/setBOOST.sh 1",
-                "current": "/usr/share/GameAssist/getBOOST.sh"
+                "cmd": "@gameassist/setBOOST.sh 0",
+                "cmd1": "@gameassist/setBOOST.sh 1",
+                "current": "@gameassist/getBOOST.sh"
             },            
             "00000000-0000-0000-0000-000000000012": {
                 "name": TransLang(PRESET_POLICY_NAME),
                 "type": 5,
                 "group": "Advance CPU",
                 "name1": TransLang(PRESET_POLICY_POWERSAVE),
-                "cmd1": "/usr/share/GameAssist/setPOLICY.sh 0",
+                "cmd1": "@gameassist/setPOLICY.sh 0",
                 "name2": TransLang(PRESET_POLICY_BALANCE),
-                "cmd2": "/usr/share/GameAssist/setPOLICY.sh 1",
+                "cmd2": "@gameassist/setPOLICY.sh 1",
                 "name3": TransLang(PRESET_POLICY_PERFORMANCE),
-                "cmd3": "/usr/share/GameAssist/setPOLICY.sh 2",
-                "current": "/usr/share/GameAssist/getPOLICY.sh"
+                "cmd3": "@gameassist/setPOLICY.sh 2",
+                "current": "@gameassist/getPOLICY.sh"
             }
         }
         with open(self.shortcutsItemPath, "w") as file:
             json.dump(data, file, indent=4)
 
     # Normal methods: can be called from JavaScript using call_plugin_function("signature", argument)
+    async def getCapabilities(self):
+        return dict(CAPABILITIES, fan=self.runningFanControl)
+
     async def setSteamAppId(self, appId):
         self.steamAppId = appId
 
@@ -692,7 +709,7 @@ class Plugin:
             Button_Map[key] = value
             with open(self.HandyGCCS_TEMP_PATH, 'w') as config_file:
                 self.HandyGCCS.write(config_file)
-            self._runProgram(self, "/usr/share/GameAssist/applyHandyGCCS.sh")
+            self._runProgram(self, "@gameassist/applyHandyGCCS.sh")
         except Exception as e:
             log(f"setHandyGCCS error {e}")
 
@@ -818,8 +835,11 @@ class Plugin:
         self.setFanControlManual(self, 0)  # default is auto
 
     def loadGameAssistModule(self):
+        if CAPABILITIES['controllers']:
+            log(f"Fan controls disabled: active controllers {CAPABILITIES['controllers']}")
+            return
         try:
-            GameAssistModule = ctypes.cdll.LoadLibrary("/usr/share/GameAssist/GameAssist.so")
+            GameAssistModule = ctypes.cdll.LoadLibrary(str(ROOT / "scripts" / "GameAssist.so"))
             InitModelFunc = GameAssistModule.InitModel
             if (InitModelFunc() >= 0):
                 self.GetCpuTempFunc = GameAssistModule.GetCpuTemp                
@@ -839,7 +859,7 @@ class Plugin:
                     except Exception as e:
                         log(f"Exception fanItemOpen: {e}")
 
-                asyncio.create_task(self.fanControlTask(self))
+                self.fanTask = asyncio.create_task(self.fanControlTask(self))
                 log("Success load Game Assist module")
             else:
                 log("Cannot init Game Assist module")
@@ -880,7 +900,10 @@ class Plugin:
         log("Initializing Plugin step 6")
 
     async def _unload(self):
-        runningFanControl = False
+        self.runningFanControl = False
+        task = getattr(self, "fanTask", None)
+        if task is not None:
+            await task
 
 #aa = Plugin()
 #aa._makeDefItems()
@@ -889,7 +912,7 @@ class Plugin:
 #aa.loadSetting()
 #aa._setGlobalSetting("test", True)
 
-#bb = aa._exeShortcut("/usr/share/GameAssist/getSMT.sh")
+#bb = aa._exeShortcut("@gameassist/getSMT.sh")
 #print(bb)
 #aa._loadShortcuts()
 #bb = {}

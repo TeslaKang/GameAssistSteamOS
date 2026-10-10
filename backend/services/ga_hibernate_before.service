@@ -1,0 +1,11 @@
+[Unit]
+Description=before hibernate process
+Before=hibernate.target
+
+[Service]
+Environment=GAMEASSIST_CONFIG_DIR=@CONFIG@
+Environment=GAMEASSIST_TDP_BACKEND=@TDP@
+ExecStart=/bin/bash @SCRIPTS@/statusInit.sh on
+
+[Install]
+WantedBy=hibernate.target

@@ -30,8 +30,8 @@ export class ShortcutsState {
     private gameAppId: string = "";
     private gameDisplayName: string = "";
     private visibleMap: Map<string, boolean> = new Map<string, boolean>;
-    private sliderGroupMap: Map<string, Shortcut> = new Map<string, Shortcut>; 
-    private sliderUpdateMap: Map<string, Function> = new Map<string, Function>; 
+    private sliderGroupMap: Map<string, Shortcut> = new Map<string, Shortcut>;
+    private sliderUpdateMap: Map<string, Function> = new Map<string, Function>;
 
     public eventBus = new EventTarget();
 
@@ -49,12 +49,12 @@ export class ShortcutsState {
     }
 
     setGameAppId(gameAppId: string): void {
-        this.gameAppId = gameAppId;    
+        this.gameAppId = gameAppId;
         this.forceUpdate();
     }
 
     setGameDisplayName(gameDisplayName: string): void {
-        this.gameDisplayName = gameDisplayName;    
+        this.gameDisplayName = gameDisplayName;
         this.forceUpdate();
     }
 
@@ -65,6 +65,7 @@ export class ShortcutsState {
 
     updateStateMap(): void {
         let visMap = new Map<string, boolean>();
+        this.sliderGroupMap.clear();
 
         for (let i = 0; i < this.shortcutsList.length; i++) {
             if (this.shortcutsList[i].type == ControlType.SLIDER && this.shortcutsList[i].group != "") {
@@ -76,7 +77,7 @@ export class ShortcutsState {
             if (this.shortcutsList[i].type == ControlType.SLIDER || this.shortcutsList[i].type == ControlType.CHOICE) {
                 let sliderUpdate = this.sliderUpdateMap.get(this.shortcutsList[i].id);
                 if (sliderUpdate != undefined) sliderUpdate(parseFloat(this.shortcutsList[i].value));
-            }            
+            }
         }
         this.setVisibleMap(visMap);
     }
@@ -90,7 +91,7 @@ export class ShortcutsState {
             this.shortcuts = shortcuts;
             this.shortcutsList = Object.values(this.shortcuts).sort((a, b) => a.position - b.position);
             this.reorderableShortcuts = [];
-            
+
             for (let i = 0; i < this.shortcutsList.length; i++) {
                 const shortcut = this.shortcutsList[i];
                 this.reorderableShortcuts[i] = {
@@ -107,7 +108,7 @@ export class ShortcutsState {
 
         this.forceUpdate();
     }
-    
+
     private forceUpdate(): void {
         this.eventBus.dispatchEvent(new Event("stateUpdate"));
     }
@@ -153,7 +154,7 @@ export const ShortcutsContextProvider: FC<ProviderProps> = ({
 
     const setVisibleMap = (visibleMap: Map<string, boolean>) => {
         shortcutsStateClass.setVisibleMap(visibleMap);
-    }    
+    }
 
     const updateStateMap = () => {
         shortcutsStateClass.updateStateMap();

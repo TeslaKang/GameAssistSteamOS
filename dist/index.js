@@ -567,6 +567,7 @@
       }
       updateStateMap() {
           let visMap = new Map();
+          this.sliderGroupMap.clear();
           for (let i = 0; i < this.shortcutsList.length; i++) {
               if (this.shortcutsList[i].type == ControlType.SLIDER && this.shortcutsList[i].group != "") {
                   this.sliderGroupMap.set(this.shortcutsList[i].group, this.shortcutsList[i]);
@@ -1175,15 +1176,21 @@
   async function runShortcut(cmd, title) {
       ShortcutManager.launchShortcut(cmd, title);
   }
-  var timerID = undefined;
-  function LaunchShortcut(cmd, title) {
-      timerID = undefined;
-      runShortcut(cmd, title);
+  const timers = new Map();
+  function clearShortcutTimer(id) {
+      const timer = timers.get(id);
+      if (timer !== undefined)
+          clearTimeout(timer);
+      timers.delete(id);
+  }
+  function LaunchShortcut(id, cmd, title) {
+      timers.delete(id);
+      void runShortcut(cmd, title);
   }
   function parseValue(num, def = -1) {
       let ret = parseFloat(num);
-      if (ret == Number.NaN)
-          ret = 0;
+      if (!Number.isFinite(ret))
+          return def;
       if (ret < 0 && def >= 0)
           ret = def;
       return ret;
@@ -1193,13 +1200,12 @@
       if (cmd.length > 0) {
           let title = getTitle(shortcut, index);
           let timeout = parseValue(shortcut.timeout, 1000);
+          clearShortcutTimer(shortcut.id);
           if (shortcut.timeout.length == 0 || timeout <= 0) {
-              LaunchShortcut(cmd, title);
+              LaunchShortcut(shortcut.id, cmd, title);
           }
           else {
-              if (timerID != undefined)
-                  clearTimeout(timerID);
-              timerID = setTimeout(LaunchShortcut, timeout, cmd, title);
+              timers.set(shortcut.id, setTimeout(LaunchShortcut, timeout, shortcut.id, cmd, title));
           }
           if (shortcut.type == ControlType.BUTTON && shortcut.group != "") {
               let shortCut = sliderGroupMap.get(shortcut.group);
@@ -1225,6 +1231,29 @@
   }
   function ShortcutLauncher(props) {
       const { visibleMap, setVisibleMap, sliderGroupMap, sliderUpdateMap } = useShortcutsState();
+      const initialValue = props.shortcut.type == ControlType.SLIDER
+          ? parseValue(props.shortcut.value, parseValue(props.shortcut.min) + Math.round((parseValue(props.shortcut.max) - parseValue(props.shortcut.min)) / 2))
+          : parseValue(props.shortcut.value, 0);
+      const [sliderValue, setSliderValue] = React.useState(initialValue);
+      React.useEffect(() => {
+          setSliderValue(initialValue);
+      }, [props.shortcut.id, props.shortcut.value, props.shortcut.type]);
+      React.useEffect(() => {
+          const id = props.shortcut.id;
+          const group = props.shortcut.group;
+          if (props.shortcut.type == ControlType.SLIDER || props.shortcut.type == ControlType.CHOICE) {
+              sliderUpdateMap.set(id, setSliderValue);
+              if (group)
+                  sliderUpdateMap.set(group, setSliderValue);
+          }
+          return () => {
+              clearShortcutTimer(id);
+              if (sliderUpdateMap.get(id) === setSliderValue)
+                  sliderUpdateMap.delete(id);
+              if (sliderUpdateMap.get(group) === setSliderValue)
+                  sliderUpdateMap.delete(group);
+          };
+      }, [props.shortcut.id, props.shortcut.group, props.shortcut.type, sliderUpdateMap]);
       if (props.shortcut.type == ControlType.GROUP) {
           return (window.SP_REACT.createElement(deckyFrontendLib.ToggleField, { checked: props.shortcut.checked == 1, label: props.shortcut.name, description: props.shortcut.desc, onChange: (value) => {
                   props.shortcut.checked = value ? 1 : 0;
@@ -1246,10 +1275,6 @@
                   } }));
           }
           else if (props.shortcut.type == ControlType.SLIDER) {
-              const [sliderValue, setSliderValue] = React.useState(parseValue(props.shortcut.value, parseValue(props.shortcut.min) + Math.round((parseValue(props.shortcut.max) - parseFloat(props.shortcut.min)) / 2)));
-              sliderUpdateMap.set(props.shortcut.id, setSliderValue);
-              if (props.shortcut.group != "")
-                  sliderUpdateMap.set(props.shortcut.group, setSliderValue);
               return (window.SP_REACT.createElement(deckyFrontendLib.SliderField, { label: props.shortcut.name, valueSuffix: props.shortcut.suffix, value: sliderValue, step: parseFloat(props.shortcut.step), min: parseFloat(props.shortcut.min), max: parseFloat(props.shortcut.max), showValue: true, onChange: (value) => {
                       if (props.shortcut.value != String(value)) {
                           props.shortcut.value = String(value);
@@ -1277,10 +1302,6 @@
                   else
                       break;
               }
-              const [sliderValue, setSliderValue] = React.useState(parseValue(props.shortcut.value));
-              sliderUpdateMap.set(props.shortcut.id, setSliderValue);
-              if (props.shortcut.group != "")
-                  sliderUpdateMap.set(props.shortcut.group, setSliderValue);
               return (window.SP_REACT.createElement(deckyFrontendLib.SliderField, { label: props.shortcut.name, valueSuffix: props.shortcut.suffix, min: 0, max: notchCount - 1, value: sliderValue, notchCount: notchCount, notchLabels: notchLabel, showValue: false, onChange: (value) => {
                       if (props.shortcut.value != String(value)) {
                           props.shortcut.value = String(value);
@@ -1305,12 +1326,12 @@
                   let btn0 = window.SP_REACT.createElement(React.Fragment, null);
                   let btn1 = window.SP_REACT.createElement(React.Fragment, null);
                   let btn2 = window.SP_REACT.createElement(React.Fragment, null);
-                  btn0 = window.SP_REACT.createElement(deckyFrontendLib.DialogButton, { style: { width: { percent } + '%', minWidth: 0 }, onClick: () => RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap) }, props.shortcut.name);
+                  btn0 = window.SP_REACT.createElement(deckyFrontendLib.DialogButton, { style: { width: `${percent}%`, minWidth: 0 }, onClick: () => RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap) }, props.shortcut.name);
                   if (props.shortcut.name1 != '') {
-                      btn1 = window.SP_REACT.createElement(deckyFrontendLib.DialogButton, { style: { width: { percent } + '%', minWidth: 0 }, onClick: () => RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap, 1) }, props.shortcut.name1);
+                      btn1 = window.SP_REACT.createElement(deckyFrontendLib.DialogButton, { style: { width: `${percent}%`, minWidth: 0 }, onClick: () => RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap, 1) }, props.shortcut.name1);
                   }
                   if (props.shortcut.name2 != '') {
-                      btn2 = window.SP_REACT.createElement(deckyFrontendLib.DialogButton, { style: { width: { percent } + '%', minWidth: 0 }, onClick: () => RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap, 2) }, props.shortcut.name2);
+                      btn2 = window.SP_REACT.createElement(deckyFrontendLib.DialogButton, { style: { width: `${percent}%`, minWidth: 0 }, onClick: () => RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap, 2) }, props.shortcut.name2);
                   }
                   return (window.SP_REACT.createElement(deckyFrontendLib.PanelSectionRow, null,
                       window.SP_REACT.createElement(deckyFrontendLib.Focusable, { style: { display: 'flex', alignItems: 'center', gap: '0.5rem' }, "flow-childen": "horizontal" },
@@ -1352,9 +1373,7 @@
       return canvasRef;
   };
   const POINT_SIZE = 13;
-  var periodicHook = null;
   function FanControl(valueType) {
-      const [firstTime, setFirstTime] = React.useState(true);
       const [enabledGlobal, setEnableInternal] = React.useState(false);
       const [interpolGlobal, setInterpolInternal] = React.useState(true);
       const [curveGlobal, setCurveInternal] = React.useState([]);
@@ -1542,55 +1561,48 @@
           //ctx.fillStyle = '#000000';
           //ctx.beginPath();
           //ctx.arc(50, 100, 20*Math.sin(frameCount*0.05)**2, 0, 2*Math.PI);
-          //ctx.fill();  
+          //ctx.fill();
       }
-      if (firstTime) {
-          setFirstTime(false);
+      React.useEffect(() => {
+          let active = true;
+          let polling = false;
           PyInterop.getCustomFanControl().then(res => {
-              if (res.success) {
-                  try {
-                      setEnableSafe(res.result);
-                  }
-                  catch (e) {
-                  }
-              }
-          });
+              if (active && res.success)
+                  setEnableSafe(res.result);
+          }).catch(console.error);
           PyInterop.getLinearFanControl().then(res => {
-              if (res.success) {
-                  try {
-                      setInterpolSafe(res.result);
-                  }
-                  catch (e) {
-                  }
-              }
-          });
+              if (active && res.success)
+                  setInterpolSafe(res.result);
+          }).catch(console.error);
           PyInterop.getFanCurveItems().then(res => {
-              if (res.success) {
-                  try {
-                      setCurveSafe(res.result);
-                  }
-                  catch (e) {
+              if (active && res.success)
+                  setCurveSafe(res.result);
+          }).catch(console.error);
+          const poll = async () => {
+              if (polling)
+                  return;
+              polling = true;
+              try {
+                  const [temperature, fan] = await Promise.all([PyInterop.getCpuTemp(), PyInterop.getFanValue()]);
+                  if (active) {
+                      setTemperature(temperature.success ? temperature.result : 0);
+                      setFanRpm(fan.success ? fan.result : 0);
                   }
               }
-          });
-          if (periodicHook != null) {
-              clearInterval(periodicHook);
-          }
-          periodicHook = setInterval(function () {
-              PyInterop.getCpuTemp().then(res => {
-                  if (res.success)
-                      setTemperature(res.result);
-                  else
-                      setTemperature(0);
-              });
-              PyInterop.getFanValue().then(res => {
-                  if (res.success)
-                      setFanRpm(res.result);
-                  else
-                      setFanRpm(0);
-              });
-          }, 1000);
-      }
+              catch (error) {
+                  console.error(error);
+              }
+              finally {
+                  polling = false;
+              }
+          };
+          void poll();
+          const timer = setInterval(poll, 1000);
+          return () => {
+              active = false;
+              clearInterval(timer);
+          };
+      }, []);
       let fanUnit = valueType.type == 2 ? " %" : " RPM";
       // TODO handle clicking on fan curve nodes
       return (window.SP_REACT.createElement(deckyFrontendLib.PanelSection, null,
@@ -1914,7 +1926,14 @@
 
   function ManageShortcuts() {
       const { shortcuts, setShortcuts, shortcutsList, reorderableShortcuts } = useShortcutsState();
-      const count = React.useRef(0);
+      React.useEffect(() => {
+          let active = true;
+          PyInterop.getShortcuts().then(res => {
+              if (active && res.success)
+                  setShortcuts(res.result, false);
+          }).catch(console.error);
+          return () => { active = false; };
+      }, []);
       const ActionButton = (props) => {
           function onAction(entryReference) {
               const shortcut = entryReference.data;
@@ -1923,14 +1942,14 @@
                           deckyFrontendLib.showModal(
                           // @ts-ignore
                           window.SP_REACT.createElement(EditModal, { onConfirm: (updated) => {
-                                  let shorts = shortcuts;
+                                  let shorts = { ...shortcuts };
                                   shorts[shortcut.id] = updated;
                                   setShortcuts(shorts, true);
                               }, shortcut: shortcut }));
                       } }, LANG.MANAGER_ITEM_EDIT),
                   window.SP_REACT.createElement(deckyFrontendLib.MenuItem, { onSelected: () => {
                           deckyFrontendLib.showModal(window.SP_REACT.createElement(deckyFrontendLib.ConfirmModal, { onOK: () => {
-                                  let shorts = shortcuts;
+                                  let shorts = { ...shortcuts };
                                   delete shorts[shortcut.id];
                                   setShortcuts(shorts, true);
                               }, bDestructiveWarning: true }, LANG.MANAGER_ITEM_DEL_QUERY));
@@ -1941,9 +1960,10 @@
       };
       async function reloadDefault() {
           await PyInterop.defGetShortcuts().then((res) => {
+              if (!res.success)
+                  return;
               setShortcuts(res.result, false);
-              if (res.success)
-                  PyInterop.toast(LANG.TOAST_SUCCESS, LANG.MANAGER_ITEM_INIT);
+              PyInterop.toast(LANG.TOAST_SUCCESS, LANG.MANAGER_ITEM_INIT);
           });
       }
       function onSave(entries) {
@@ -1957,10 +1977,6 @@
           return (window.SP_REACT.createElement(React.Fragment, null,
               window.SP_REACT.createElement(ActionButton, { entry: props.entry })));
       };
-      if (shortcutsList.length === 0 && count.current < 10) {
-          reloadDefault();
-          count.current++;
-      }
       return (window.SP_REACT.createElement(React.Fragment, null,
           window.SP_REACT.createElement("div", { style: {
                   marginBottom: "5px"
@@ -1982,13 +1998,17 @@
   // https://songzzi.github.io/2021/11/21/react-2/
   const StringFormat = (str, ...args) => str.replace(/{(\d+)}/g, (_match, index) => args[index] || '');
   const ShortcutsContent = () => {
-      const { shortcuts, setShortcuts, shortcutsList, gameAppId, gameDisplayName, visibleMap, sliderUpdateMap, updateStateMap } = useShortcutsState();
-      if (Object.values(shortcuts).length === 0) {
+      const { setShortcuts, shortcutsList, gameAppId, gameDisplayName, visibleMap, sliderUpdateMap, updateStateMap } = useShortcutsState();
+      React.useEffect(() => {
+          let active = true;
           PyInterop.getShortcuts().then(res => {
-              setShortcuts(res.result, false);
-              updateStateMap();
-          });
-      }
+              if (active && res.success) {
+                  setShortcuts(res.result, false);
+                  updateStateMap();
+              }
+          }).catch(console.error);
+          return () => { active = false; };
+      }, []);
       const [useGameProfile, setUseGameProfile] = React.useState(false);
       const [PROFILE_TITLE, setProfileTitle] = React.useState(LANG.PROFILE_TITLE);
       const [PROFILE_DESC, setProfileDesc] = React.useState(StringFormat(LANG.PROFILE_USING, LANG.PROFILE_DEFAULT));
@@ -1999,22 +2019,31 @@
       sliderUpdateMap.set("100", setProfileTitle);
       sliderUpdateMap.set("101", setProfileDesc);
       sliderUpdateMap.set("102", setProfileGame);
-      if (gameAppId != "") {
-          let keyName = "useGameProfile-" + gameAppId;
-          PyInterop.getGlobalSetting(keyName).then((res) => {
-              if (typeof res.result == "string") {
-                  let use = res.result == "1";
+      React.useEffect(() => {
+          let active = true;
+          setUseGameProfile(false);
+          setProfileDesc(StringFormat(LANG.PROFILE_USING, LANG.PROFILE_DEFAULT));
+          if (gameAppId) {
+              PyInterop.getGlobalSetting("useGameProfile-" + gameAppId).then(res => {
+                  if (!active || !res.success)
+                      return;
+                  const use = res.result === "1";
                   setUseGameProfile(use);
                   visibleMap.set(keyUseGameProfile, use);
-                  if (use)
-                      setProfileDesc(StringFormat(LANG.PROFILE_USING, gameDisplayName));
-              }
-          });
-          gameProfileSetting = window.SP_REACT.createElement(deckyFrontendLib.ToggleField, { checked: useGameProfile, label: PROFILE_USE_GAME, onChange: (value) => {
+                  setProfileDesc(StringFormat(LANG.PROFILE_USING, use ? gameDisplayName : LANG.PROFILE_DEFAULT));
+              }).catch(console.error);
+          }
+          return () => { active = false; };
+      }, [gameAppId, gameDisplayName]);
+      if (gameAppId != "") {
+          let keyName = "useGameProfile-" + gameAppId;
+          gameProfileSetting = window.SP_REACT.createElement(deckyFrontendLib.ToggleField, { checked: useGameProfile, label: PROFILE_USE_GAME, onChange: async (value) => {
                   setUseGameProfile(value);
-                  PyInterop.setGlobalSetting(keyName, value == true ? "1" : "0");
-                  PyInterop.setSteamAppId(value ? gameAppId : "0");
+                  await PyInterop.setGlobalSetting(keyName, value == true ? "1" : "0");
+                  await PyInterop.setSteamAppId(value ? gameAppId : "0");
                   PyInterop.getShortcuts().then(res => {
+                      if (!res.success)
+                          return;
                       setShortcuts(res.result, false);
                       updateStateMap();
                       PyInterop.runShortcuts("");
@@ -2022,16 +2051,20 @@
               } });
       }
       const [fanValueType, setFanValueType] = React.useState(-1);
-      PyInterop.getFanValueType().then(res => {
-          if (res.success)
-              setFanValueType(res.result);
-      });
+      React.useEffect(() => {
+          let active = true;
+          PyInterop.getFanValueType().then(res => {
+              if (active && res.success)
+                  setFanValueType(res.result);
+          }).catch(console.error);
+          return () => { active = false; };
+      }, []);
       return (window.SP_REACT.createElement(React.Fragment, null,
           window.SP_REACT.createElement("style", null, `
                 .styleColumn {
                     width: inherit;
                     height: inherit;
-  
+
                     flex: 1 1 1px;
                     scroll-padding: 48px 0px;
                     display: flex;
@@ -2052,7 +2085,7 @@
                 .styleColumn .${deckyFrontendLib.gamepadDialogClasses.FieldLabel} {
                     margin-left: 16px;
                     margin-right: 16px;
-                }  
+                }
             `),
           window.SP_REACT.createElement("div", { className: "styleColumn" },
               window.SP_REACT.createElement(deckyFrontendLib.PanelSection, null,
@@ -2063,7 +2096,7 @@
                                   window.SP_REACT.createElement("b", null, LANG.ITEM_MANAGER_TITLE))))),
                   window.SP_REACT.createElement(deckyFrontendLib.Field, { label: PROFILE_TITLE, description: PROFILE_DESC }),
                   gameProfileSetting,
-                  shortcutsList.map((item) => (window.SP_REACT.createElement(ShortcutLauncher, { shortcut: item }))),
+                  shortcutsList.map((item) => (window.SP_REACT.createElement(ShortcutLauncher, { key: item.id, shortcut: item }))),
                   fanValueType >= 0 &&
                       window.SP_REACT.createElement(FanControl, { type: fanValueType })))));
   };
@@ -2126,14 +2159,14 @@
           route: "/GameAssist-nav/about",
       };
       const [pages, setPages] = React.useState([0, 1, 2, 4]);
-      PyInterop.existHandyGCCS().then(res => {
-          if (res.success) {
-              if (res.result) {
-                  if (pages.length == 4)
-                      setPages([0, 1, 2, 3, 4]);
-              }
-          }
-      });
+      React.useEffect(() => {
+          let active = true;
+          PyInterop.existHandyGCCS().then(res => {
+              if (active && res.success)
+                  setPages(res.result ? [0, 1, 2, 3, 4] : [0, 1, 2, 4]);
+          }).catch(console.error);
+          return () => { active = false; };
+      }, []);
       return (window.SP_REACT.createElement(deckyFrontendLib.SidebarNavigation, { title: ITEM_MANAGER_TITLE, showTitle: true, pages: pages?.map((value, _index) => {
               if (value == 0)
                   return page0;
@@ -2165,16 +2198,17 @@
               }
               state.setGameAppId(gameAppId);
               let keyName = "useGameProfile-" + gameAppId;
-              PyInterop.getGlobalSetting(keyName).then((res) => {
-                  if (typeof res.result == "string" && res.result == "1") {
-                      PyInterop.setSteamAppId(gameAppId);
-                      PyInterop.getShortcuts().then(res => {
-                          state.setShortcuts(res.result, false);
-                          state.updateStateMap();
-                          PyInterop.runShortcuts("");
-                      });
-                  }
-              });
+              PyInterop.getGlobalSetting(keyName).then(async (res) => {
+                  if (!res.success || state.getPublicState().gameAppId !== gameAppId)
+                      return;
+                  await PyInterop.setSteamAppId(res.result === "1" ? gameAppId : "0");
+                  const shortcuts = await PyInterop.getShortcuts();
+                  if (!shortcuts.success || state.getPublicState().gameAppId !== gameAppId)
+                      return;
+                  state.setShortcuts(shortcuts.result, false);
+                  state.updateStateMap();
+                  await PyInterop.runShortcuts("");
+              }).catch(console.error);
           }
       }
       let MainRunningApp = deckyFrontendLib.Router.MainRunningApp;
@@ -2186,15 +2220,17 @@
               setGameRunning(currGameAppId, appId);
           }
       }
-      SteamController.registerForAllAppLifetimeNotifications((appId, data) => {
+      const lifetimeRegistration = SteamController.registerForAllAppLifetimeNotifications((appId, data) => {
           const currGameAppId = state.getPublicState().gameAppId;
           if (data.bRunning)
               setGameRunning(currGameAppId, appId);
-          else if (currGameAppId != "") {
-              PyInterop.setSteamAppId("0");
+          else if (currGameAppId === appId.toString()) {
+              const resetProfile = PyInterop.setSteamAppId("0");
               state.setGameAppId("");
               state.setGameDisplayName("");
-              PyInterop.getShortcuts().then(res => {
+              resetProfile.then(() => PyInterop.getShortcuts()).then(res => {
+                  if (!res.success || state.getPublicState().gameAppId !== "")
+                      return;
                   state.setShortcuts(res.result, false);
                   state.updateStateMap();
                   PyInterop.runShortcuts("");
@@ -2209,6 +2245,7 @@
               window.SP_REACT.createElement(ShortcutsContent, null))),
           icon: window.SP_REACT.createElement(IoApps, null),
           onDismount() {
+              lifetimeRegistration.unregister();
               serverApi.routerHook.removeRoute("/GameAssist-nav");
           },
           alwaysRender: true

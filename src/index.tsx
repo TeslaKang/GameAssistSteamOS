@@ -14,9 +14,9 @@ import {
     staticClasses,
     LifetimeNotification,
     SteamAppOverview
-  } from "decky-frontend-lib";  
+  } from "decky-frontend-lib";
 
-import { VFC, Fragment, useState } from "react";
+import { VFC, Fragment, useState, useEffect } from "react";
 import { IoApps } from "react-icons/io5";
 import { Setting } from "./components/shortcuts-manager/Setting";
 import { HandyGCCS } from "./components/shortcuts-manager/HandyGCCS";
@@ -25,30 +25,34 @@ import { AddShortcut } from "./components/shortcuts-manager/AddShortcut";
 import { ShortcutLauncher } from "./components/ShortcutLanucher";
 import { FanControl } from "./components/canvas";
 import { ManageShortcuts } from "./components/shortcuts-manager/ManageShortcuts";
-  
+
 import { PyInterop } from "./PyInterop";
 import { Shortcut, LANG } from "./lib/data-structures/Shortcut";
 import { ShortcutsContextProvider, ShortcutsState, useShortcutsState } from "./state/ShortcutsState";
 import { SteamController } from "./lib/Utils";
-  
+
 // https://chinsun9.github.io/2021/02/17/react%EC%97%90%EC%84%9C-Map%EC%9D%84-state%EB%A1%9C-%EC%82%AC%EC%9A%A9%ED%95%A0-%EB%95%8C/
 // https://songzzi.github.io/2021/11/21/react-2/
-  
+
 const StringFormat = (str: string, ...args: string[]) =>
     str.replace(/{(\d+)}/g, (_match, index) => args[index] || '')
 
 const ShortcutsContent: VFC = () => {
-    const { shortcuts, setShortcuts, shortcutsList, gameAppId, gameDisplayName, visibleMap,
+    const { setShortcuts, shortcutsList, gameAppId, gameDisplayName, visibleMap,
         sliderUpdateMap, updateStateMap } = useShortcutsState();
 
-    if (Object.values(shortcuts as ShortcutsDictionary).length === 0) {
+    useEffect(() => {
+        let active = true;
         PyInterop.getShortcuts().then(res => {
-            setShortcuts(res.result as ShortcutsDictionary, false);
-            updateStateMap();
-        });
-    }
+            if (active && res.success) {
+                setShortcuts(res.result as ShortcutsDictionary, false);
+                updateStateMap();
+            }
+        }).catch(console.error);
+        return () => { active = false; };
+    }, []);
 
-    const [useGameProfile, setUseGameProfile] = useState<boolean>(false);    
+    const [useGameProfile, setUseGameProfile] = useState<boolean>(false);
     const [PROFILE_TITLE, setProfileTitle] = useState<string>(LANG.PROFILE_TITLE);
     const [PROFILE_DESC, setProfileDesc] = useState<string>(StringFormat(LANG.PROFILE_USING, LANG.PROFILE_DEFAULT));
     const [PROFILE_USE_GAME, setProfileGame] = useState<string>(LANG.PROFILE_USE_GAME);
@@ -59,26 +63,33 @@ const ShortcutsContent: VFC = () => {
     sliderUpdateMap.set("100", setProfileTitle);
     sliderUpdateMap.set("101", setProfileDesc);
     sliderUpdateMap.set("102", setProfileGame);
-    if (gameAppId != "") {
-        let keyName = "useGameProfile-" + gameAppId;
-        PyInterop.getGlobalSetting(keyName).then((res) => {
-            if (typeof res.result == "string") {
-                let use = (res.result as string) == "1";
-
+    useEffect(() => {
+        let active = true;
+        setUseGameProfile(false);
+        setProfileDesc(StringFormat(LANG.PROFILE_USING, LANG.PROFILE_DEFAULT));
+        if (gameAppId) {
+            PyInterop.getGlobalSetting("useGameProfile-" + gameAppId).then(res => {
+                if (!active || !res.success) return;
+                const use = res.result === "1";
                 setUseGameProfile(use);
                 visibleMap.set(keyUseGameProfile, use);
-                if (use) setProfileDesc(StringFormat(LANG.PROFILE_USING, gameDisplayName));
-            }
-        });
+                setProfileDesc(StringFormat(LANG.PROFILE_USING, use ? gameDisplayName : LANG.PROFILE_DEFAULT));
+            }).catch(console.error);
+        }
+        return () => { active = false; };
+    }, [gameAppId, gameDisplayName]);
 
-        gameProfileSetting = <ToggleField 
+    if (gameAppId != "") {
+        let keyName = "useGameProfile-" + gameAppId;
+        gameProfileSetting = <ToggleField
             checked = {useGameProfile}
             label = {PROFILE_USE_GAME}
-            onChange = {(value: boolean) => {
+            onChange = {async (value: boolean) => {
                 setUseGameProfile(value);
-                PyInterop.setGlobalSetting(keyName, value == true ? "1" : "0");
-                PyInterop.setSteamAppId(value ? gameAppId : "0");
+                await PyInterop.setGlobalSetting(keyName, value == true ? "1" : "0");
+                await PyInterop.setSteamAppId(value ? gameAppId : "0");
                 PyInterop.getShortcuts().then(res => {
+                    if (!res.success) return;
                     setShortcuts(res.result as ShortcutsDictionary, false);
                     updateStateMap();
                     PyInterop.runShortcuts("");
@@ -88,9 +99,13 @@ const ShortcutsContent: VFC = () => {
     }
 
     const [fanValueType, setFanValueType] = useState<number>(-1);
-    PyInterop.getFanValueType().then(res => {
-        if (res.success) setFanValueType(res.result as number);
-    });
+    useEffect(() => {
+        let active = true;
+        PyInterop.getFanValueType().then(res => {
+            if (active && res.success) setFanValueType(res.result as number);
+        }).catch(console.error);
+        return () => { active = false; };
+    }, []);
 
     return (
         <>
@@ -98,7 +113,7 @@ const ShortcutsContent: VFC = () => {
                 .styleColumn {
                     width: inherit;
                     height: inherit;
-  
+
                     flex: 1 1 1px;
                     scroll-padding: 48px 0px;
                     display: flex;
@@ -119,7 +134,7 @@ const ShortcutsContent: VFC = () => {
                 .styleColumn .${gamepadDialogClasses.FieldLabel} {
                     margin-left: 16px;
                     margin-right: 16px;
-                }  
+                }
             `}</style>
             <div className = "styleColumn">
                 <PanelSection>
@@ -137,10 +152,10 @@ const ShortcutsContent: VFC = () => {
                     {gameProfileSetting}
                     {
                         shortcutsList.map((item: Shortcut) => (
-                            <ShortcutLauncher shortcut = {item} />
+                            <ShortcutLauncher key={item.id} shortcut = {item} />
                         ))
                     }
-                    {fanValueType >= 0 && 
+                    {fanValueType >= 0 &&
                         <FanControl type = {fanValueType} />
                     }
                 </PanelSection>
@@ -151,7 +166,7 @@ const ShortcutsContent: VFC = () => {
 
 const ShortcutsManagerRouter: VFC = () => {
     const [ITEM_MANAGER_TITLE, setTitle] = useState<string>(LANG.ITEM_MANAGER_TITLE);
-    const [ITEM_MANAGER_SETTING, setSetting] = useState<string>(LANG.ITEM_MANAGER_SETTING);    
+    const [ITEM_MANAGER_SETTING, setSetting] = useState<string>(LANG.ITEM_MANAGER_SETTING);
     const [ITEM_MANAGER_ADD, setAdd] = useState<string>(LANG.ITEM_MANAGER_ADD);
     const [ITEM_MANAGER_EDIT, setEdit] = useState<string>(LANG.ITEM_MANAGER_EDIT);
     const [ITEM_MANAGER_HANDY, setHandy] = useState<string>(LANG.ITEM_MANAGER_HANDY);
@@ -160,7 +175,7 @@ const ShortcutsManagerRouter: VFC = () => {
 
     function onChange() {
         setTitle(LANG.ITEM_MANAGER_TITLE);
-        setSetting(LANG.ITEM_MANAGER_SETTING);    
+        setSetting(LANG.ITEM_MANAGER_SETTING);
         setAdd(LANG.ITEM_MANAGER_ADD);
         setEdit(LANG.ITEM_MANAGER_EDIT);
         setHandy(LANG.ITEM_MANAGER_HANDY);
@@ -176,17 +191,17 @@ const ShortcutsManagerRouter: VFC = () => {
             if (gameAppId != "" && use != undefined && use) {
                 let display = gameDisplayName;
                 setProfileDesc(StringFormat(LANG.PROFILE_USING, display));
-            } 
+            }
             else setProfileDesc(StringFormat(LANG.PROFILE_USING, LANG.PROFILE_DEFAULT));
         }
-        if (setProfileTitle != undefined) setProfileTitle(LANG.PROFILE_TITLE);        
-        if (setProfileGame != undefined) setProfileGame(LANG.PROFILE_USE_GAME);        
+        if (setProfileTitle != undefined) setProfileTitle(LANG.PROFILE_TITLE);
+        if (setProfileGame != undefined) setProfileGame(LANG.PROFILE_USE_GAME);
     }
 
     const page0 = {
         title: ITEM_MANAGER_SETTING,
         content: <Setting onChange={onChange} />,
-        route: "/GameAssist-nav/setting",                    
+        route: "/GameAssist-nav/setting",
     };
     const page1 = {
         title: ITEM_MANAGER_ADD,
@@ -210,13 +225,13 @@ const ShortcutsManagerRouter: VFC = () => {
     };
 
     const [pages, setPages] = useState<number[]>([0, 1, 2, 4]);
-    PyInterop.existHandyGCCS().then(res => {
-        if (res.success) {
-            if (res.result as boolean) {
-                if (pages.length == 4) setPages([0, 1, 2, 3, 4]);
-            }
-        }
-    });
+    useEffect(() => {
+        let active = true;
+        PyInterop.existHandyGCCS().then(res => {
+            if (active && res.success) setPages(res.result ? [0, 1, 2, 3, 4] : [0, 1, 2, 4]);
+        }).catch(console.error);
+        return () => { active = false; };
+    }, []);
 
     return (
         <SidebarNavigation
@@ -232,7 +247,7 @@ const ShortcutsManagerRouter: VFC = () => {
         />
     );
 };
-  
+
 export default definePlugin((serverApi: ServerAPI) => {
     PyInterop.setServer(serverApi);
 
@@ -248,7 +263,7 @@ export default definePlugin((serverApi: ServerAPI) => {
 
     function setGameRunning(currGameAppId: string, appId: number) {
         const gameAppId = appId.toString();
-    
+
         if (currGameAppId != gameAppId) {
             const overview = window.appStore.GetAppOverviewByAppID(appId);
             if (overview != undefined && overview != null) {
@@ -259,16 +274,15 @@ export default definePlugin((serverApi: ServerAPI) => {
             state.setGameAppId(gameAppId);
 
             let keyName = "useGameProfile-" + gameAppId;
-            PyInterop.getGlobalSetting(keyName).then((res) => {
-                if (typeof res.result == "string" && (res.result as string) == "1") {
-                    PyInterop.setSteamAppId(gameAppId);
-                    PyInterop.getShortcuts().then(res => {
-                        state.setShortcuts(res.result as ShortcutsDictionary, false);
-                        state.updateStateMap();
-                        PyInterop.runShortcuts("");
-                    });
-                }
-            });
+            PyInterop.getGlobalSetting(keyName).then(async (res) => {
+                if (!res.success || state.getPublicState().gameAppId !== gameAppId) return;
+                await PyInterop.setSteamAppId(res.result === "1" ? gameAppId : "0");
+                const shortcuts = await PyInterop.getShortcuts();
+                if (!shortcuts.success || state.getPublicState().gameAppId !== gameAppId) return;
+                state.setShortcuts(shortcuts.result as ShortcutsDictionary, false);
+                state.updateStateMap();
+                await PyInterop.runShortcuts("");
+            }).catch(console.error);
         }
     }
 
@@ -284,16 +298,17 @@ export default definePlugin((serverApi: ServerAPI) => {
         }
     }
 
-    SteamController.registerForAllAppLifetimeNotifications((appId: number, data: LifetimeNotification) => {
+    const lifetimeRegistration = SteamController.registerForAllAppLifetimeNotifications((appId: number, data: LifetimeNotification) => {
         const currGameAppId = state.getPublicState().gameAppId;
 
         if (data.bRunning) setGameRunning(currGameAppId, appId);
-        else if (currGameAppId != "") {
-            PyInterop.setSteamAppId("0"); 
+        else if (currGameAppId === appId.toString()) {
+            const resetProfile = PyInterop.setSteamAppId("0");
             state.setGameAppId("");
             state.setGameDisplayName("");
 
-            PyInterop.getShortcuts().then(res => {
+            resetProfile.then(() => PyInterop.getShortcuts()).then(res => {
+                if (!res.success || state.getPublicState().gameAppId !== "") return;
                 state.setShortcuts(res.result as ShortcutsDictionary, false);
                 state.updateStateMap();
                 PyInterop.runShortcuts("");
@@ -306,7 +321,7 @@ export default definePlugin((serverApi: ServerAPI) => {
             <ShortcutsManagerRouter />
         </ShortcutsContextProvider>
     ));
-  
+
     return {
         title: <div className = {staticClasses.Title}>{LANG.GAME_ASSIST}</div>,
         content: (
@@ -316,6 +331,7 @@ export default definePlugin((serverApi: ServerAPI) => {
         ),
         icon: <IoApps />,
         onDismount() {
+            lifetimeRegistration.unregister();
             serverApi.routerHook.removeRoute("/GameAssist-nav");
         },
         alwaysRender: true

@@ -1,0 +1,11 @@
+[Unit]
+Description=after hibernate process
+After=hibernate.target
+
+[Service]
+Environment=GAMEASSIST_CONFIG_DIR=@CONFIG@
+Environment=GAMEASSIST_TDP_BACKEND=@TDP@
+ExecStart=/usr/bin/python3 @SCRIPTS@/../restore.py
+
+[Install]
+WantedBy=hibernate.target

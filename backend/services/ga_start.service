@@ -1,0 +1,11 @@
+[Unit]
+Description=my start service
+After=graphical-session.target
+
+[Service]
+Environment=GAMEASSIST_CONFIG_DIR=@CONFIG@
+Environment=GAMEASSIST_TDP_BACKEND=@TDP@
+ExecStart=/usr/bin/python3 @SCRIPTS@/../restore.py
+
+[Install]
+WantedBy=multi-user.target

@@ -1,5 +1,5 @@
 import { PanelSectionRow, ButtonItem, ToggleField, SliderField, Focusable, DialogButton } from "decky-frontend-lib";
-import { Fragment, useState } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { Shortcut } from "../lib/data-structures/Shortcut";
 import { ControlType } from "../lib/data-structures/Shortcut";
 import { useShortcutsState } from "../state/ShortcutsState";
@@ -63,17 +63,23 @@ async function runShortcut(cmd: string, title: string) {
     ShortcutManager.launchShortcut(cmd, title);
 }
 
-var timerID: any = undefined;
+const timers = new Map<string, ReturnType<typeof setTimeout>>();
 
-function LaunchShortcut(cmd: string, title: string) {
-    timerID = undefined;
-    runShortcut(cmd, title);
+function clearShortcutTimer(id: string) {
+    const timer = timers.get(id);
+    if (timer !== undefined) clearTimeout(timer);
+    timers.delete(id);
+}
+
+function LaunchShortcut(id: string, cmd: string, title: string) {
+    timers.delete(id);
+    void runShortcut(cmd, title);
 }
 
 function parseValue(num: string, def: number = -1) {
     let ret = parseFloat(num);
 
-    if (ret == Number.NaN) ret = 0;
+    if (!Number.isFinite(ret)) return def;
     if (ret < 0 && def >= 0) ret = def;
     return ret;
 }
@@ -85,19 +91,19 @@ function RunShortcut(shortcut: Shortcut, sliderGroupMap: Map<string, Shortcut>, 
         let title = getTitle(shortcut, index);
         let timeout = parseValue(shortcut.timeout, 1000);
 
+        clearShortcutTimer(shortcut.id);
         if (shortcut.timeout.length == 0 || timeout <= 0) {
-            LaunchShortcut(cmd, title);
+            LaunchShortcut(shortcut.id, cmd, title);
         }
         else {
-            if (timerID != undefined) clearTimeout(timerID);
-            timerID = setTimeout(LaunchShortcut, timeout, cmd, title);
+            timers.set(shortcut.id, setTimeout(LaunchShortcut, timeout, shortcut.id, cmd, title));
         }
         if (shortcut.type == ControlType.BUTTON && shortcut.group != "") {
             let shortCut = sliderGroupMap.get(shortcut.group);
 
             if (shortCut != undefined) {
                 let value = shortCut.value;
-                
+
                 if (index == 2) value = String(parseValue(shortcut.name2, parseValue(shortCut.value, 0)));
                 else if (index == 1) value = String(parseValue(shortcut.name1, parseValue(shortCut.value, 0)));
                 else value = String(parseValue(shortcut.name, parseValue(shortCut.value, 0)));
@@ -108,7 +114,7 @@ function RunShortcut(shortcut: Shortcut, sliderGroupMap: Map<string, Shortcut>, 
                     let sliderUpdate = sliderUpdateMap.get(shortcut.group);
                     if (sliderUpdate != undefined) {
                         sliderUpdate(parseFloat(shortCut.value));
-                    } 
+                    }
                 }
             }
         }
@@ -117,6 +123,26 @@ function RunShortcut(shortcut: Shortcut, sliderGroupMap: Map<string, Shortcut>, 
 
 export function ShortcutLauncher(props: ShortcutLauncherProps) {
     const { visibleMap, setVisibleMap, sliderGroupMap, sliderUpdateMap } = useShortcutsState();
+    const initialValue = props.shortcut.type == ControlType.SLIDER
+        ? parseValue(props.shortcut.value, parseValue(props.shortcut.min) + Math.round((parseValue(props.shortcut.max) - parseValue(props.shortcut.min)) / 2))
+        : parseValue(props.shortcut.value, 0);
+    const [sliderValue, setSliderValue] = useState<number>(initialValue);
+    useEffect(() => {
+        setSliderValue(initialValue);
+    }, [props.shortcut.id, props.shortcut.value, props.shortcut.type]);
+    useEffect(() => {
+        const id = props.shortcut.id;
+        const group = props.shortcut.group;
+        if (props.shortcut.type == ControlType.SLIDER || props.shortcut.type == ControlType.CHOICE) {
+            sliderUpdateMap.set(id, setSliderValue);
+            if (group) sliderUpdateMap.set(group, setSliderValue);
+        }
+        return () => {
+            clearShortcutTimer(id);
+            if (sliderUpdateMap.get(id) === setSliderValue) sliderUpdateMap.delete(id);
+            if (sliderUpdateMap.get(group) === setSliderValue) sliderUpdateMap.delete(group);
+        };
+    }, [props.shortcut.id, props.shortcut.group, props.shortcut.type, sliderUpdateMap]);
 
     if (props.shortcut.type == ControlType.GROUP) {
         return (
@@ -153,9 +179,6 @@ export function ShortcutLauncher(props: ShortcutLauncherProps) {
             );
         }
         else if (props.shortcut.type == ControlType.SLIDER) {
-            const [sliderValue, setSliderValue] = useState<number>(parseValue(props.shortcut.value, parseValue(props.shortcut.min) + Math.round((parseValue(props.shortcut.max) - parseFloat(props.shortcut.min)) / 2)));       
-            sliderUpdateMap.set(props.shortcut.id, setSliderValue);
-            if (props.shortcut.group != "") sliderUpdateMap.set(props.shortcut.group, setSliderValue);
             return (
                 <SliderField
                     label = {props.shortcut.name}
@@ -195,9 +218,6 @@ export function ShortcutLauncher(props: ShortcutLauncherProps) {
                 else break;
             }
 
-            const [sliderValue, setSliderValue] = useState<number>(parseValue(props.shortcut.value));
-            sliderUpdateMap.set(props.shortcut.id, setSliderValue);
-            if (props.shortcut.group != "") sliderUpdateMap.set(props.shortcut.group, setSliderValue);
             return (
                 <SliderField
                     label = {props.shortcut.name}
@@ -225,13 +245,13 @@ export function ShortcutLauncher(props: ShortcutLauncherProps) {
             if (props.shortcut.name1 != '') buttonCount++;
             if (props.shortcut.name2 != '') buttonCount++;
             if (buttonCount == 1) {
-                return (   
+                return (
                     <PanelSectionRow>
                         <ButtonItem layout="below" onClick={() => RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap)}>
                             {props.shortcut.name}
                         </ButtonItem>
                     </PanelSectionRow>
-                );    
+                );
             }
             else {
                 let percent = 100 / buttonCount;
@@ -239,23 +259,23 @@ export function ShortcutLauncher(props: ShortcutLauncherProps) {
                 let btn1 = <></>;
                 let btn2 = <></>;
 
-                btn0 = <DialogButton style={{ width: {percent} + '%', minWidth: 0 }} onClick={() => RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap)} >
+                btn0 = <DialogButton style={{ width: `${percent}%`, minWidth: 0 }} onClick={() => RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap)} >
                             {props.shortcut.name}
                         </DialogButton>;
                 if (props.shortcut.name1 != '') {
-                    btn1 = <DialogButton style={{ width: {percent} + '%', minWidth: 0 }} onClick={() => RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap, 1)} >
+                    btn1 = <DialogButton style={{ width: `${percent}%`, minWidth: 0 }} onClick={() => RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap, 1)} >
                                 {props.shortcut.name1}
                             </DialogButton>
                 }
                 if (props.shortcut.name2 != '') {
-                    btn2 = <DialogButton style={{ width: {percent} + '%', minWidth: 0 }} onClick={() => RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap, 2)} >
+                    btn2 = <DialogButton style={{ width: `${percent}%`, minWidth: 0 }} onClick={() => RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap, 2)} >
                                 {props.shortcut.name2}
                             </DialogButton>
                 }
 
                 return (
                     <PanelSectionRow>
-                        <Focusable style={{ display: 'flex', alignItems: 'center', gap: '0.5rem'}} flow-childen="horizontal" >                        
+                        <Focusable style={{ display: 'flex', alignItems: 'center', gap: '0.5rem'}} flow-childen="horizontal" >
                             {btn0}
                             {btn1}
                             {btn2}
@@ -265,5 +285,5 @@ export function ShortcutLauncher(props: ShortcutLauncherProps) {
             }
         }
     }
-    return null;    
+    return null;
 }
