@@ -10,7 +10,7 @@ import locale
 import ctypes
 import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "backend"))
-from runtime import user_home, detect, supported, resolve, ROOT
+from runtime import user_home, detect, supported, visible, is_tdp_command, TDP_WARNING_KEY, resolve, ROOT
 import configparser
 from genericpath import exists
 from subprocess import check_output, CalledProcessError, STDOUT
@@ -215,6 +215,12 @@ class Plugin:
 
     def _runProgram(self, cmd):
         log(f"_runProgram {cmd}") 
+        if is_tdp_command(cmd):
+            current = detect()
+            if 'hhd' in current['controllers'] and self._getGlobalSetting(self, TDP_WARNING_KEY) != '1':
+                log('TDP change deferred until the HHD warning is acknowledged')
+                return False
+            CAPABILITIES.update(current)
         if (cmd.find("systemctl suspend") >= 0):
             log(f"systemctl suspend {cmd}") 
             if (steam_ifrunning_deckui("steam://shortpowerpress") == True):
@@ -384,7 +390,7 @@ class Plugin:
                             "name4": v.name4, "cmd4": v.cmd4, "name5": v.name5, "cmd5": v.cmd5, "name6": v.name6, "cmd6": v.cmd6 }
 
         if not small:
-            res = {k: v for k, v in res.items() if supported(" ".join(str(v.get(key, "")) for key in ("cmd", "cmd1", "cmd2", "cmd3", "cmd4", "cmd5", "cmd6", "current")), CAPABILITIES)}
+            res = {k: v for k, v in res.items() if visible(" ".join(str(v.get(key, "")) for key in ("cmd", "cmd1", "cmd2", "cmd3", "cmd4", "cmd5", "cmd6", "current")), CAPABILITIES)}
         return res
 
     def saveShortcuts(self):
@@ -432,7 +438,7 @@ class Plugin:
             for key, value in stored.items():
                 commands = " ".join(str(value.get(field, "")) for field in
                                     ("cmd", "cmd1", "cmd2", "cmd3", "cmd4", "cmd5", "cmd6", "current"))
-                if not supported(commands, CAPABILITIES):
+                if not visible(commands, CAPABILITIES):
                     value['id'] = key
                     Map[key] = Shortcut(value)
 
@@ -634,6 +640,12 @@ class Plugin:
     # Normal methods: can be called from JavaScript using call_plugin_function("signature", argument)
     async def getCapabilities(self):
         return dict(CAPABILITIES, fan=self.runningFanControl)
+
+    async def getTdpStatus(self):
+        current = detect()
+        CAPABILITIES.update(current)
+        return dict(available=bool(current['tdp']), hhd='hhd' in current['controllers'],
+                    acknowledged=self._getGlobalSetting(self, TDP_WARNING_KEY) == '1')
 
     async def setSteamAppId(self, appId):
         self.steamAppId = appId

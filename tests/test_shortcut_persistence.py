@@ -10,7 +10,7 @@ source = ast.parse((pathlib.Path(__file__).resolve().parents[1] / 'main.py').rea
 plugin = next(node for node in source.body if isinstance(node, ast.ClassDef) and node.name == 'Plugin')
 save_method = next(node for node in plugin.body if isinstance(node, ast.FunctionDef) and node.name == '_setShortcuts')
 namespace = dict(json=json, exists=lambda path: pathlib.Path(path).exists(),
-                 supported=runtime.supported, Shortcut=lambda value: dict(value))
+                 visible=runtime.visible, Shortcut=lambda value: dict(value))
 exec(compile(ast.Module(body=[save_method], type_ignores=[]), '<save method>', 'exec'), namespace)
 
 class PersistenceTests(unittest.TestCase):
@@ -19,7 +19,7 @@ class PersistenceTests(unittest.TestCase):
             path = pathlib.Path(directory) / 'items.json'
             path.write_text(json.dumps({
                 'hidden': dict(name='GPU', cmd='@gameassist/setGPU.sh 900'),
-                'hidden-choice': dict(name='Choice', cmd1='echo ok', cmd6='@gameassist/setTDP.sh 12'),
+                'hidden-choice': dict(name='Choice', cmd1='echo ok', cmd6='@gameassist/setGPU.sh 900'),
                 'visible-deleted': dict(name='Old command', cmd='echo old'),
                 'visible-edited': dict(name='Command', cmd='echo before'),
             }))
@@ -32,7 +32,7 @@ class PersistenceTests(unittest.TestCase):
             namespace['_setShortcuts'](fake, [dict(id='visible-edited', cmd='echo after')])
             saved = json.loads(path.read_text())
             self.assertEqual(saved['hidden']['cmd'], '@gameassist/setGPU.sh 900')
-            self.assertEqual(saved['hidden-choice']['cmd6'], '@gameassist/setTDP.sh 12')
+            self.assertEqual(saved['hidden-choice']['cmd6'], '@gameassist/setGPU.sh 900')
             self.assertEqual(saved['visible-edited']['cmd'], 'echo after')
             self.assertNotIn('visible-deleted', saved)
 

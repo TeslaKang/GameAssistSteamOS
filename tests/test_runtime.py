@@ -34,11 +34,17 @@ class RuntimeTests(unittest.TestCase):
         self.assertFalse(caps['cpu'])
         self.assertFalse(caps['gpu'])
 
-    def test_active_hhd_blocks_power_controller(self):
+    def test_active_hhd_keeps_power_controller(self):
         with patch.object(runtime, 'read', return_value='GenuineIntel'), patch.object(runtime.shutil, 'which', return_value='/bin/tool'), patch.object(runtime.pathlib.Path, 'exists', return_value=True), patch.object(runtime.pathlib.Path, 'glob', return_value=[]), patch.object(runtime.subprocess, 'run', return_value=types.SimpleNamespace(returncode=0)):
             caps = runtime.detect()
-        self.assertEqual(caps['tdp'], '')
+        self.assertEqual(caps['tdp'], 'intel-rapl')
         self.assertIn('hhd', caps['controllers'])
+
+    def test_tdp_is_visible_without_backend_but_not_executable(self):
+        caps = dict(tdp='', gpu=False, cpu=False, smt=False, boost=False, policy=False)
+        self.assertTrue(runtime.visible('@gameassist/setTDP.sh 12', caps))
+        self.assertFalse(runtime.supported('@gameassist/setTDP.sh 12', caps))
+        self.assertFalse(runtime.visible('@gameassist/setGPU.sh 900', caps))
 
 if __name__ == '__main__':
     unittest.main()

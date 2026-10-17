@@ -60,9 +60,15 @@ def detect():
                     controllers.append(service)
             except (OSError, subprocess.TimeoutExpired):
                 pass
-    # HHD can own power/fan controls. Avoid two controllers writing concurrently.
-    if 'hhd' in controllers:
-        tdp = ''
+        # HHD is also distributed as a per-user system service.
+        try:
+            result = subprocess.run(['systemctl', 'list-units', '--type=service', '--state=active',
+                                     '--no-legend', '--plain', 'hhd@*.service', 'hhd_local@*.service'],
+                                    capture_output=True, text=True, timeout=2)
+            if result.returncode == 0 and (getattr(result, 'stdout', '') or '').strip() and 'hhd' not in controllers:
+                controllers.append('hhd')
+        except (OSError, subprocess.TimeoutExpired):
+            pass
     return dict(controllers=controllers, os=read('/etc/os-release'), model=read('/sys/devices/virtual/dmi/id/product_name'),
                 tdp=tdp, gpu=gpu, cpu=cpu_control,
                 smt=read('/sys/devices/system/cpu/smt/control') in ('on', 'off'),
@@ -71,6 +77,15 @@ def detect():
                 handy=pathlib.Path('/etc/handygccs/handygccs.conf').exists())
 
 FEATURES = {'TDP': 'tdp', 'GPU': 'gpu', 'CPU': 'cpu', 'SMT': 'smt', 'BOOST': 'boost', 'POLICY': 'policy'}
+
+TDP_WARNING_KEY = 'hhdTdpWarningAcknowledged'
+
+def is_tdp_command(command):
+    return bool(re.search(r'(?:set|reset|get)TDP\.sh\b', command))
+
+def visible(command, caps):
+    # TDP remains discoverable even when no usable control interface is found.
+    return supported(command, dict(caps, tdp=True))
 
 def supported(command, caps):
     for script in re.findall(r'(?:set|reset|get)(TDP|GPU|CPU|SMT|BOOST|POLICY|AdvCPU)\.sh', command):

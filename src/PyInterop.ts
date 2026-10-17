@@ -8,6 +8,10 @@ export class PyInterop {
         this.serverAPI = serv;
     }
 
+    static async getTdpStatus(): Promise<ServerResponse<{available: boolean; hhd: boolean; acknowledged: boolean}>> {
+        return await this.serverAPI.callPluginMethod<{}, {available: boolean; hhd: boolean; acknowledged: boolean}>("getTdpStatus", {});
+    }
+
     static async setSteamAppId(appId: string): Promise<ServerResponse<void>> {
         return await this.serverAPI.callPluginMethod<{appId: string}, void>("setSteamAppId", { appId: appId });
     }

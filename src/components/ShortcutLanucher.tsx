@@ -150,9 +150,11 @@ export function ShortcutLauncher(props: ShortcutLauncherProps) {
                 checked = {props.shortcut.checked == 1}
                 label = {props.shortcut.name}
                 description = {props.shortcut.desc}
-                onChange = {(value: boolean) => {
+                onChange = {async (value: boolean) => {
+                    if (value && (props.shortcut.group === "GroupTDP" || /(?:set|reset|get)TDP\.sh\b/.test(props.shortcut.cmd))
+                        && !await ShortcutManager.confirmTdp()) return;
                     props.shortcut.checked = value ? 1 : 0;
-                    PyInterop.modShortcut(props.shortcut);
+                    await PyInterop.modShortcut(props.shortcut);
                     RunShortcut(props.shortcut, sliderGroupMap, sliderUpdateMap);
                     if (value) PyInterop.runShortcuts(props.shortcut.group);
 

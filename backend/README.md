@@ -17,8 +17,12 @@ HandyGCCS is optional; custom commands and settings are preserved.
 
 Do not run another fan/TDP controller simultaneously. OS controllers can
 overwrite values; their ownership must be checked on the actual device.
-Active HHD disables GameAssist TDP and fan controls; jupiter-fan-control
-disables GameAssist fan controls. Other controllers require manual checks.
+TDP entries stay visible regardless of HHD or hardware detection. Without
+a usable backend, attempts show an unavailable message. Active HHD requires
+a one-time confirmation before the first TDP change; acknowledgment is saved
+in the user's GameAssist settings, across restarts and game profiles. Until
+then automatic profile/resume TDP changes are deferred. HHD and
+jupiter-fan-control still disable GameAssist fan controls.
 Optional resume services can be installed from the deployed backend with
 `sudo env DECKY_USER="$USER" python3 backend/install-services.py` (run from
 the deployed plugin directory). Install only after testing manual controls.
